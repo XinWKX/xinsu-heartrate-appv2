@@ -2,10 +2,13 @@ package com.xinsu.heartrate.ui.widgets
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.view.View
 import com.xinsu.heartrate.core.pulse.PulseEngine
 import com.xinsu.heartrate.core.render.RenderListener
 import com.xinsu.heartrate.core.render.RenderLoop
+import com.xinsu.heartrate.particles.effects.DepthFogLayer
+import com.xinsu.heartrate.particles.effects.GlowLayer
 import com.xinsu.heartrate.particles.engine.ParticleEngine
 import com.xinsu.heartrate.particles.renderer.ParticleRenderer
 
@@ -16,13 +19,23 @@ class ParticleBackgroundView(
 ) : View(context),
     RenderListener {
 
-    private val engine =
+    private val particleEngine =
         ParticleEngine()
 
-    private val renderer =
+    private val particleRenderer =
         ParticleRenderer()
 
+    private val glowLayer =
+        GlowLayer()
+
+    private val fogLayer =
+        DepthFogLayer()
+
     init {
+
+        setBackgroundColor(
+            Color.BLACK
+        )
 
         RenderLoop.addListener(this)
 
@@ -33,12 +46,15 @@ class ParticleBackgroundView(
 
         super.onAttachedToWindow()
 
-        engine.initialize(
+        post {
 
-            width,
+            particleEngine.initialize(
 
-            height
-        )
+                width,
+
+                height
+            )
+        }
     }
 
     override fun onDetachedFromWindow() {
@@ -54,7 +70,7 @@ class ParticleBackgroundView(
 
         PulseEngine.update(deltaTime)
 
-        engine.update(
+        particleEngine.update(
 
             deltaTime,
 
@@ -72,11 +88,32 @@ class ParticleBackgroundView(
 
         super.onDraw(canvas)
 
-        renderer.render(
+        // 深空雾层
+        fogLayer.render(
 
             canvas,
 
-            engine
+            width,
+
+            height
+        )
+
+        // 环境 Glow
+        glowLayer.render(
+
+            canvas,
+
+            width,
+
+            height
+        )
+
+        // 粒子层
+        particleRenderer.render(
+
+            canvas,
+
+            particleEngine
         )
     }
     }
