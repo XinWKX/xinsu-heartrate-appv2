@@ -21,6 +21,8 @@
 
     <application
 
+        android:name=".MainApplication"
+
         android:allowBackup="true"
 
         android:hardwareAccelerated="true"
@@ -53,7 +55,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Main -->
+        <!-- Main Activity -->
         <activity
 
             android:name=".MainActivity"
@@ -72,7 +74,7 @@
 
         </activity>
 
-        <!-- Crash -->
+        <!-- Crash Activity -->
         <activity
 
             android:name=".crash.ui.CrashActivity"
