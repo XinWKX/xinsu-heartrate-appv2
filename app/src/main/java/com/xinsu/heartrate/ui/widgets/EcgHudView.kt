@@ -2,38 +2,71 @@ package com.xinsu.heartrate.ui.widgets
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import android.view.View
+import com.xinsu.heartrate.core.render.RenderListener
+import com.xinsu.heartrate.core.render.RenderLoop
+import com.xinsu.heartrate.ecg.engine.EcgEngine
+import com.xinsu.heartrate.ecg.renderer.EcgRenderer
 
 class EcgHudView(
 
     context: Context
 
-) : View(context) {
+) : View(context),
+    RenderListener {
 
-    private val paint = Paint().apply {
+    private val engine =
+        EcgEngine()
 
-        color = Color.GREEN
+    private val renderer =
+        EcgRenderer()
 
-        strokeWidth = 4f
+    init {
 
-        isAntiAlias = true
+        RenderLoop.addListener(this)
     }
 
-    override fun onDraw(canvas: Canvas) {
+    override fun onAttachedToWindow() {
+
+        super.onAttachedToWindow()
+
+        post {
+
+            engine.initialize(width)
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+
+        super.onDetachedFromWindow()
+
+        RenderLoop.removeListener(this)
+    }
+
+    override fun onRender(
+        deltaTime: Float
+    ) {
+
+        engine.update(
+            deltaTime
+        )
+
+        postInvalidateOnAnimation()
+    }
+
+    override fun onDraw(
+        canvas: Canvas
+    ) {
 
         super.onDraw(canvas)
 
-        val centerY = height / 2f
+        renderer.render(
 
-        canvas.drawLine(
+            canvas,
 
-            0f,
-            centerY,
-            width.toFloat(),
-            centerY,
-            paint
+            engine,
+
+            height / 2f
         )
     }
-}
+    }
