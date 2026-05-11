@@ -2,6 +2,7 @@ package com.xinsu.heartrate.particles.engine
 
 import com.xinsu.heartrate.core.pulse.PulseEngine
 import com.xinsu.heartrate.particles.model.Particle
+import com.xinsu.heartrate.transition.engine.TransitionEngine
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
@@ -11,9 +12,6 @@ class ParticleEngine {
     private val particles =
         mutableListOf<Particle>()
 
-    /**
-     * 初始化粒子
-     */
     fun initialize(
 
         width: Int,
@@ -23,7 +21,7 @@ class ParticleEngine {
 
         particles.clear()
 
-        repeat(120) {
+        repeat(140) {
 
             val depth =
                 Random.nextFloat()
@@ -37,10 +35,11 @@ class ParticleEngine {
                     y = height / 2f,
 
                     radius =
-                        2f + depth * 6f,
+                        2f + depth * 8f,
 
                     alpha =
-                        (20 + depth * 80).toInt(),
+                        (15 + depth * 90)
+                            .toInt(),
 
                     depth = depth,
 
@@ -48,19 +47,18 @@ class ParticleEngine {
                         Random.nextFloat() * 360f,
 
                     orbitRadius =
-                        80f + depth * 400f,
+                        100f + depth * 500f,
 
                     speed =
-                        0.02f + depth * 0.08f
+                        0.015f +
+                        depth * 0.05f
                 )
             )
         }
     }
 
-    /**
-     * 更新粒子
-     */
     fun update(
+
         deltaTime: Float,
 
         width: Int,
@@ -69,12 +67,20 @@ class ParticleEngine {
     ) {
 
         val pulseScale =
-            1f + PulseEngine.pulse * 0.08f
+            1f +
+            PulseEngine.pulse * 0.08f
+
+        val collapse =
+            1f -
+            TransitionEngine.progress
+                * 0.92f
 
         particles.forEach {
 
             it.angle +=
-                it.speed * deltaTime * 60f
+                it.speed *
+                deltaTime *
+                60f
 
             val radians =
                 Math.toRadians(
@@ -82,7 +88,9 @@ class ParticleEngine {
                 )
 
             val orbit =
-                it.orbitRadius * pulseScale
+                it.orbitRadius *
+                pulseScale *
+                collapse
 
             it.x = (
 
@@ -90,7 +98,6 @@ class ParticleEngine {
 
                 cos(radians)
                     .toFloat() * orbit
-
             )
 
             it.y = (
@@ -99,14 +106,10 @@ class ParticleEngine {
 
                 sin(radians)
                     .toFloat() * orbit
-
             )
         }
     }
 
-    /**
-     * 获取粒子
-     */
     fun getParticles():
             List<Particle> {
 
