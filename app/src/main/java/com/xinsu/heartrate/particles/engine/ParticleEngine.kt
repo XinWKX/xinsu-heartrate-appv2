@@ -2,6 +2,7 @@ package com.xinsu.heartrate.particles.engine
 
 import com.xinsu.heartrate.core.pulse.PulseEngine
 import com.xinsu.heartrate.particles.model.Particle
+import com.xinsu.heartrate.settings.core.SettingsManager
 import com.xinsu.heartrate.transition.engine.TransitionEngine
 import kotlin.math.cos
 import kotlin.math.sin
@@ -21,7 +22,9 @@ class ParticleEngine {
 
         particles.clear()
 
-        repeat(140) {
+        repeat(
+            SettingsManager.particleCount
+        ) {
 
             val depth =
                 Random.nextFloat()
