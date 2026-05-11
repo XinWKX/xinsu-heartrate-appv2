@@ -1,6 +1,5 @@
 package com.xinsu.heartrate.bluetooth.ui.state
 
-import android.view.View
 import com.xinsu.heartrate.bluetooth.core.BleState
 import com.xinsu.heartrate.bluetooth.core.BleStateManager
 import com.xinsu.heartrate.bluetooth.ui.DeviceListPanel
@@ -11,101 +10,84 @@ import com.xinsu.heartrate.ui.hud.HeartRateHud
 
 class BleUiStateController(
 
-    private val radarView:
-    ScanRadarView,
+    private val radarView: ScanRadarView,
 
-    private val connectionView:
-    ConnectionAnimationView,
+    private val connectionView: ConnectionAnimationView,
 
-    private val devicePanel:
-    DeviceListPanel,
+    private val devicePanel: DeviceListPanel,
 
-    private val bluetoothHud:
-    BluetoothHud,
+    private val bluetoothHud: BluetoothHud,
 
-    private val heartHud:
-    HeartRateHud
+    private val heartHud: HeartRateHud
+
 ) {
 
-    /**
-     * 更新 UI
-     */
     fun update() {
 
         when (
-
-            BleStateManager.state
-
+            BleStateManager.currentState
         ) {
+
+            BleState.IDLE -> {
+
+                bluetoothHud.updateState(
+                    "Idle"
+                )
+            }
 
             BleState.SCANNING -> {
 
-                radarView.visibility =
-                    View.VISIBLE
+                radarView.startScan()
 
-                connectionView.hide()
-
-                devicePanel.visibility =
-                    View.VISIBLE
-
-                bluetoothHud.refresh()
+                bluetoothHud.updateState(
+                    "Scanning..."
+                )
             }
 
             BleState.CONNECTING -> {
 
-                radarView.visibility =
-                    View.VISIBLE
+                connectionView.showConnecting()
 
-                connectionView.show()
-
-                bluetoothHud.refresh()
+                bluetoothHud.updateState(
+                    "Connecting..."
+                )
             }
 
             BleState.CONNECTED -> {
 
-                connectionView.hide()
+                radarView.stopScan()
 
-                radarView.visibility =
-                    View.GONE
+                connectionView.showConnected()
 
-                bluetoothHud.refresh()
+                bluetoothHud.updateState(
+                    "Connected"
+                )
 
-                heartHud.alpha = 0f
-
-                heartHud.animate()
-
-                    .alpha(1f)
-
-                    .setDuration(800)
-
-                    .start()
-            }
-
-            BleState.RECONNECTING -> {
-
-                connectionView.show()
-
-                bluetoothHud.refresh()
+                heartHud.updateHeartRate(
+                    "78"
+                )
             }
 
             BleState.DISCONNECTED -> {
 
-                radarView.visibility =
-                    View.VISIBLE
+                radarView.stopScan()
 
-                bluetoothHud.refresh()
+                connectionView.showDisconnected()
+
+                bluetoothHud.updateState(
+                    "Disconnected"
+                )
+
+                heartHud.updateHeartRate(
+                    "--"
+                )
             }
 
             BleState.FAILED -> {
 
-                connectionView.hide()
-
-                bluetoothHud.refresh()
-            }
-
-            else -> {
-
-                bluetoothHud.refresh()
+                bluetoothHud.updateState(
+                    "Failed"
+                )
             }
         }
     }
