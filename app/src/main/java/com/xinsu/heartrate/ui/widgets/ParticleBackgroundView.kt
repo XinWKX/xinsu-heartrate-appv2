@@ -3,6 +3,7 @@ package com.xinsu.heartrate.ui.widgets
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.view.MotionEvent
 import android.view.View
 import com.xinsu.heartrate.core.pulse.PulseEngine
 import com.xinsu.heartrate.core.render.RenderListener
@@ -11,6 +12,8 @@ import com.xinsu.heartrate.particles.effects.DepthFogLayer
 import com.xinsu.heartrate.particles.effects.GlowLayer
 import com.xinsu.heartrate.particles.engine.ParticleEngine
 import com.xinsu.heartrate.particles.renderer.ParticleRenderer
+import com.xinsu.heartrate.transition.engine.TransitionEngine
+import com.xinsu.heartrate.transition.renderer.TransitionRenderer
 
 class ParticleBackgroundView(
 
@@ -30,6 +33,9 @@ class ParticleBackgroundView(
 
     private val fogLayer =
         DepthFogLayer()
+
+    private val transitionRenderer =
+        TransitionRenderer()
 
     init {
 
@@ -70,6 +76,10 @@ class ParticleBackgroundView(
 
         PulseEngine.update(deltaTime)
 
+        TransitionEngine.update(
+            deltaTime
+        )
+
         particleEngine.update(
 
             deltaTime,
@@ -88,7 +98,6 @@ class ParticleBackgroundView(
 
         super.onDraw(canvas)
 
-        // 深空雾层
         fogLayer.render(
 
             canvas,
@@ -98,7 +107,6 @@ class ParticleBackgroundView(
             height
         )
 
-        // 环境 Glow
         glowLayer.render(
 
             canvas,
@@ -108,12 +116,38 @@ class ParticleBackgroundView(
             height
         )
 
-        // 粒子层
         particleRenderer.render(
 
             canvas,
 
             particleEngine
         )
+
+        transitionRenderer.render(
+
+            canvas,
+
+            width,
+
+            height
+        )
+    }
+
+    /**
+     * 点击触发转场
+     */
+    override fun onTouchEvent(
+        event: MotionEvent
+    ): Boolean {
+
+        if (
+            event.action ==
+            MotionEvent.ACTION_DOWN
+        ) {
+
+            TransitionEngine.startTransition()
+        }
+
+        return true
     }
     }
