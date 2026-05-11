@@ -16,4 +16,14 @@ object BleReconnectEngine {
 
         reconnectAction?.invoke()
     }
+
+    fun startReconnect() {
+
+        attemptReconnect()
+    }
+
+    fun stopReconnect() {
+
+        reconnectAction = null
+    }
 }
