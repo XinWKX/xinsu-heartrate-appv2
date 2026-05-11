@@ -2,8 +2,14 @@ package com.xinsu.heartrate.bluetooth.core
 
 object BleStateManager {
 
-    private var currentState:
+    var currentState:
             BleState = BleState.IDLE
+
+    var connectedDeviceName:
+            String = "Unknown"
+
+    var currentRssi:
+            Int = -100
 
     fun setState(
         state: BleState
@@ -12,30 +18,13 @@ object BleStateManager {
         currentState = state
     }
 
-    fun getState():
-            BleState {
+    fun updateDevice(
+        name: String,
+        rssi: Int
+    ) {
 
-        return currentState
-    }
+        connectedDeviceName = name
 
-    fun isConnected():
-            Boolean {
-
-        return currentState ==
-                BleState.CONNECTED
-    }
-
-    fun isScanning():
-            Boolean {
-
-        return currentState ==
-                BleState.SCANNING
-    }
-
-    fun isConnecting():
-            Boolean {
-
-        return currentState ==
-                BleState.CONNECTING
+        currentRssi = rssi
     }
 }
