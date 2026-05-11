@@ -14,9 +14,7 @@ class ParticleEngine {
         mutableListOf<Particle>()
 
     fun initialize(
-
         width: Int,
-
         height: Int
     ) {
 
@@ -61,11 +59,8 @@ class ParticleEngine {
     }
 
     fun update(
-
         deltaTime: Float,
-
         width: Int,
-
         height: Int
     ) {
 
@@ -75,41 +70,32 @@ class ParticleEngine {
 
         val collapse =
             1f -
-            TransitionEngine.progress
-                * 0.92f
+            TransitionEngine.progress * 0.92f
 
-        particles.forEach {
+        particles.forEach { particle ->
 
-            it.angle +=
-                it.speed *
+            particle.angle +=
+                particle.speed *
                 deltaTime *
                 60f
 
             val radians =
                 Math.toRadians(
-                    it.angle.toDouble()
+                    particle.angle.toDouble()
                 )
 
             val orbit =
-                it.orbitRadius *
+                particle.orbitRadius *
                 pulseScale *
                 collapse
 
-            it.x = (
-
+            particle.x =
                 width / 2f +
+                cos(radians).toFloat() * orbit
 
-                cos(radians)
-                    .toFloat() * orbit
-            )
-
-            it.y = (
-
+            particle.y =
                 height / 2f +
-
-                sin(radians)
-                    .toFloat() * orbit
-            )
+                sin(radians).toFloat() * orbit
         }
     }
 
