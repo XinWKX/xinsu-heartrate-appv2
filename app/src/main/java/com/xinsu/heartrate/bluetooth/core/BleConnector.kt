@@ -13,13 +13,51 @@ class BleConnector(
     private var bluetoothGatt:
             BluetoothGatt? = null
 
+    private var currentDevice:
+            BluetoothDevice? = null
+
+    init {
+
+        BleReconnectEngine
+            .setReconnectAction {
+
+                currentDevice?.let {
+
+                    connect(it)
+                }
+            }
+    }
+
     /**
-     * 连接设备
+     * 连接
      */
     @SuppressLint("MissingPermission")
     fun connect(
         device: BluetoothDevice
     ) {
+
+        if (
+            !BleConnectionLock.canConnect()
+        ) {
+
+            return
+        }
+
+        BleConnectionLock.lock()
+
+        currentDevice = device
+
+        BleStateManager.setState(
+            BleState.CONNECTING
+        )
+
+        bluetoothGatt?.close()
+
+        BleTimeoutController
+            .startTimeout {
+
+                disconnect()
+            }
 
         bluetoothGatt =
 
@@ -34,7 +72,26 @@ class BleConnector(
     }
 
     /**
-     * GATT 回调
+     * 断开
+     */
+    @SuppressLint("MissingPermission")
+    fun disconnect() {
+
+        bluetoothGatt?.disconnect()
+
+        bluetoothGatt?.close()
+
+        bluetoothGatt = null
+
+        BleConnectionLock.unlock()
+
+        BleStateManager.setState(
+            BleState.DISCONNECTED
+        )
+    }
+
+    /**
+     * GATT Callback
      */
     private val gattCallback =
         object : BluetoothGattCallback() {
@@ -48,14 +105,47 @@ class BleConnector(
                 newState: Int
             ) {
 
-                if (
+                when (newState) {
 
-                    newState ==
-                    BluetoothProfile.STATE_CONNECTED
+                    BluetoothProfile
+                        .STATE_CONNECTED -> {
 
-                ) {
+                        BleTimeoutController
+                            .cancel()
 
-                    gatt.discoverServices()
+                        BleConnectionLock
+                            .unlock()
+
+                        BleStateManager
+                            .setState(
+
+                                BleState.CONNECTED
+                            )
+
+                        BleStateManager
+                            .connectedDeviceName =
+
+                            gatt.device.name
+                                ?: "UNKNOWN"
+
+                        gatt.discoverServices()
+                    }
+
+                    BluetoothProfile
+                        .STATE_DISCONNECTED -> {
+
+                        BleConnectionLock
+                            .unlock()
+
+                        BleStateManager
+                            .setState(
+
+                                BleState.DISCONNECTED
+                            )
+
+                        BleReconnectEngine
+                            .attemptReconnect()
+                    }
                 }
             }
 
@@ -112,6 +202,19 @@ class BleConnector(
 
                 PulseEngine.bpm =
                     bpm.toFloat()
+            }
+
+            override fun onReadRemoteRssi(
+
+                gatt: BluetoothGatt,
+
+                rssi: Int,
+
+                status: Int
+            ) {
+
+                BleStateManager.currentRssi =
+                    rssi
             }
         }
 }
