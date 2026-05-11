@@ -2,13 +2,18 @@ package com.xinsu.heartrate.bluetooth.core
 
 object BleReconnectEngine {
 
-    fun startReconnect() {
+    private var reconnectAction:
+            (() -> Unit)? = null
 
-        // TODO
+    fun setReconnectAction(
+        action: () -> Unit
+    ) {
+
+        reconnectAction = action
     }
 
-    fun stopReconnect() {
+    fun attemptReconnect() {
 
-        // TODO
+        reconnectAction?.invoke()
     }
 }
