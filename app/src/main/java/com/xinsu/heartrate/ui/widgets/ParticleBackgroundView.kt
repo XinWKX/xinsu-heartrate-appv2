@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.view.MotionEvent
 import android.view.View
+import com.xinsu.heartrate.audio.core.AudioEngine
+import com.xinsu.heartrate.audio.pulse.PulseAudioController
 import com.xinsu.heartrate.core.pulse.PulseEngine
 import com.xinsu.heartrate.core.render.RenderListener
 import com.xinsu.heartrate.core.render.RenderLoop
@@ -22,20 +24,41 @@ class ParticleBackgroundView(
 ) : View(context),
     RenderListener {
 
+    /**
+     * 粒子引擎
+     */
     private val particleEngine =
         ParticleEngine()
 
+    /**
+     * 粒子渲染器
+     */
     private val particleRenderer =
         ParticleRenderer()
 
+    /**
+     * 环境 Glow
+     */
     private val glowLayer =
         GlowLayer()
 
+    /**
+     * 空间雾层
+     */
     private val fogLayer =
         DepthFogLayer()
 
+    /**
+     * 转场渲染器
+     */
     private val transitionRenderer =
         TransitionRenderer()
+
+    /**
+     * Pulse 音效控制
+     */
+    private val pulseAudioController =
+        PulseAudioController()
 
     init {
 
@@ -43,11 +66,20 @@ class ParticleBackgroundView(
             Color.BLACK
         )
 
+        // 初始化音频系统
+        AudioEngine.initialize(
+            context
+        )
+
+        // 注册 RenderLoop
         RenderLoop.addListener(this)
 
         RenderLoop.start()
     }
 
+    /**
+     * View Attached
+     */
     override fun onAttachedToWindow() {
 
         super.onAttachedToWindow()
@@ -63,23 +95,39 @@ class ParticleBackgroundView(
         }
     }
 
+    /**
+     * View Detached
+     */
     override fun onDetachedFromWindow() {
 
         super.onDetachedFromWindow()
 
         RenderLoop.removeListener(this)
+
+        AudioEngine.release()
     }
 
+    /**
+     * RenderLoop 更新
+     */
     override fun onRender(
         deltaTime: Float
     ) {
 
-        PulseEngine.update(deltaTime)
+        // 更新 Pulse
+        PulseEngine.update(
+            deltaTime
+        )
 
+        // 更新音效
+        pulseAudioController.update()
+
+        // 更新 Transition
         TransitionEngine.update(
             deltaTime
         )
 
+        // 更新粒子
         particleEngine.update(
 
             deltaTime,
@@ -89,15 +137,20 @@ class ParticleBackgroundView(
             height
         )
 
+        // 请求重绘
         postInvalidateOnAnimation()
     }
 
+    /**
+     * 绘制
+     */
     override fun onDraw(
         canvas: Canvas
     ) {
 
         super.onDraw(canvas)
 
+        // 空间雾层
         fogLayer.render(
 
             canvas,
@@ -107,6 +160,7 @@ class ParticleBackgroundView(
             height
         )
 
+        // Glow
         glowLayer.render(
 
             canvas,
@@ -116,6 +170,7 @@ class ParticleBackgroundView(
             height
         )
 
+        // 粒子
         particleRenderer.render(
 
             canvas,
@@ -123,6 +178,7 @@ class ParticleBackgroundView(
             particleEngine
         )
 
+        // 黑场转场
         transitionRenderer.render(
 
             canvas,
@@ -134,15 +190,17 @@ class ParticleBackgroundView(
     }
 
     /**
-     * 点击触发转场
+     * 点击触发转场测试
      */
     override fun onTouchEvent(
         event: MotionEvent
     ): Boolean {
 
         if (
+
             event.action ==
             MotionEvent.ACTION_DOWN
+
         ) {
 
             TransitionEngine.startTransition()
