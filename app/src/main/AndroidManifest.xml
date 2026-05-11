@@ -35,6 +35,25 @@
 
         android:theme="@style/Theme.XinsuHeartRate">
 
+        <!-- FileProvider -->
+        <provider
+
+            android:name="androidx.core.content.FileProvider"
+
+            android:authorities="${applicationId}.fileprovider"
+
+            android:exported="false"
+
+            android:grantUriPermissions="true">
+
+            <meta-data
+
+                android:name="android.support.FILE_PROVIDER_PATHS"
+
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- Main -->
         <activity
 
             android:name=".MainActivity"
@@ -52,6 +71,13 @@
             </intent-filter>
 
         </activity>
+
+        <!-- Crash -->
+        <activity
+
+            android:name=".crash.ui.CrashActivity"
+
+            android:exported="false" />
 
     </application>
 
