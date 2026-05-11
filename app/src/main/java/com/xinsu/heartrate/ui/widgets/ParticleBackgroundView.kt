@@ -2,41 +2,81 @@ package com.xinsu.heartrate.ui.widgets
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import android.view.View
+import com.xinsu.heartrate.core.pulse.PulseEngine
+import com.xinsu.heartrate.core.render.RenderListener
+import com.xinsu.heartrate.core.render.RenderLoop
+import com.xinsu.heartrate.particles.engine.ParticleEngine
+import com.xinsu.heartrate.particles.renderer.ParticleRenderer
 
 class ParticleBackgroundView(
 
     context: Context
 
-) : View(context) {
+) : View(context),
+    RenderListener {
 
-    private val paint = Paint().apply {
+    private val engine =
+        ParticleEngine()
 
-        color = Color.argb(
+    private val renderer =
+        ParticleRenderer()
 
-            40,
-            0,
-            255,
-            100
-        )
+    init {
 
-        isAntiAlias = true
+        RenderLoop.addListener(this)
+
+        RenderLoop.start()
     }
 
-    override fun onDraw(canvas: Canvas) {
+    override fun onAttachedToWindow() {
 
-        super.onDraw(canvas)
+        super.onAttachedToWindow()
 
-        canvas.drawCircle(
+        engine.initialize(
 
-            width / 2f,
-            height / 2f,
-            200f,
-            paint
+            width,
+
+            height
+        )
+    }
+
+    override fun onDetachedFromWindow() {
+
+        super.onDetachedFromWindow()
+
+        RenderLoop.removeListener(this)
+    }
+
+    override fun onRender(
+        deltaTime: Float
+    ) {
+
+        PulseEngine.update(deltaTime)
+
+        engine.update(
+
+            deltaTime,
+
+            width,
+
+            height
         )
 
         postInvalidateOnAnimation()
     }
-}
+
+    override fun onDraw(
+        canvas: Canvas
+    ) {
+
+        super.onDraw(canvas)
+
+        renderer.render(
+
+            canvas,
+
+            engine
+        )
+    }
+    }
