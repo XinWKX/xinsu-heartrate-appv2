@@ -1,11 +1,17 @@
 package com.xinsu.heartrate.ui.widgets
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.widget.FrameLayout
+import com.xinsu.heartrate.bluetooth.core.BleState
+import com.xinsu.heartrate.bluetooth.core.BleStateManager
 import com.xinsu.heartrate.bluetooth.model.HeartRateDevice
 import com.xinsu.heartrate.bluetooth.ui.DeviceListPanel
 import com.xinsu.heartrate.bluetooth.ui.ScanRadarView
+import com.xinsu.heartrate.bluetooth.ui.state.BleUiStateController
+import com.xinsu.heartrate.connection.effects.ConnectionAnimationView
 import com.xinsu.heartrate.settings.ui.SettingsPanel
 import com.xinsu.heartrate.ui.glass.GlassButton
 import com.xinsu.heartrate.ui.hud.BluetoothHud
@@ -24,9 +30,45 @@ class HudOverlayView(
     private lateinit var devicePanel:
             DeviceListPanel
 
+    private lateinit var radarView:
+            ScanRadarView
+
+    private lateinit var bluetoothHud:
+            BluetoothHud
+
+    private lateinit var heartHud:
+            HeartRateHud
+
+    private lateinit var connectionView:
+            ConnectionAnimationView
+
+    private lateinit var uiStateController:
+            BleUiStateController
+
+    private val handler =
+        Handler(
+            Looper.getMainLooper()
+        )
+
+    private val uiRunnable =
+        object : Runnable {
+
+            override fun run() {
+
+                uiStateController.update()
+
+                handler.postDelayed(
+                    this,
+                    120
+                )
+            }
+        }
+
     init {
 
         initUI()
+
+        handler.post(uiRunnable)
     }
 
     private fun initUI() {
@@ -55,7 +97,7 @@ class HudOverlayView(
         )
 
         // Radar
-        val radar =
+        radarView =
             ScanRadarView(context)
 
         val radarParams =
@@ -70,12 +112,31 @@ class HudOverlayView(
             Gravity.CENTER
 
         addView(
-            radar,
+            radarView,
             radarParams
         )
 
+        // Connection Animation
+        connectionView =
+            ConnectionAnimationView(
+                context
+            )
+
+        val connectionParams =
+            LayoutParams(
+
+                LayoutParams.MATCH_PARENT,
+
+                LayoutParams.MATCH_PARENT
+            )
+
+        addView(
+            connectionView,
+            connectionParams
+        )
+
         // Heart HUD
-        val heartHud =
+        heartHud =
             HeartRateHud(context)
 
         val heartParams =
@@ -95,7 +156,7 @@ class HudOverlayView(
         )
 
         // Bluetooth HUD
-        val bluetoothHud =
+        bluetoothHud =
             BluetoothHud(context)
 
         val bluetoothParams =
@@ -145,11 +206,6 @@ class HudOverlayView(
         // Device Panel
         devicePanel =
             DeviceListPanel(context)
-
-        devicePanel.alpha = 0f
-
-        devicePanel.visibility =
-            GONE
 
         val deviceParams =
             LayoutParams(
@@ -210,13 +266,29 @@ class HudOverlayView(
             settingsParams
         )
 
-        // 点击打开设备列表
+        // UI Controller
+        uiStateController =
+
+            BleUiStateController(
+
+                radarView,
+
+                connectionView,
+
+                devicePanel,
+
+                bluetoothHud,
+
+                heartHud
+            )
+
+        // Click
         connectButton.setOnClickListener {
 
-            toggleDevicePanel()
+            simulateConnection()
         }
 
-        // 长按打开设置
+        // Long Click
         connectButton.setOnLongClickListener {
 
             toggleSettings()
@@ -224,12 +296,37 @@ class HudOverlayView(
             true
         }
 
-        // 测试设备
         mockDevices()
     }
 
     /**
-     * 测试设备
+     * 模拟连接流程
+     */
+    private fun simulateConnection() {
+
+        BleStateManager.setState(
+            BleState.SCANNING
+        )
+
+        handler.postDelayed({
+
+            BleStateManager.setState(
+                BleState.CONNECTING
+            )
+
+        }, 1200)
+
+        handler.postDelayed({
+
+            BleStateManager.setState(
+                BleState.CONNECTED
+            )
+
+        }, 4200)
+    }
+
+    /**
+     * Mock Devices
      */
     private fun mockDevices() {
 
@@ -270,45 +367,7 @@ class HudOverlayView(
     }
 
     /**
-     * 切换设备面板
-     */
-    private fun toggleDevicePanel() {
-
-        if (
-            devicePanel.visibility == GONE
-        ) {
-
-            devicePanel.visibility =
-                VISIBLE
-
-            devicePanel.animate()
-
-                .alpha(1f)
-
-                .setDuration(280)
-
-                .start()
-
-        } else {
-
-            devicePanel.animate()
-
-                .alpha(0f)
-
-                .setDuration(220)
-
-                .withEndAction {
-
-                    devicePanel.visibility =
-                        GONE
-                }
-
-                .start()
-        }
-    }
-
-    /**
-     * 设置
+     * Toggle Settings
      */
     private fun toggleSettings() {
 
@@ -343,5 +402,14 @@ class HudOverlayView(
 
                 .start()
         }
+    }
+
+    override fun onDetachedFromWindow() {
+
+        super.onDetachedFromWindow()
+
+        handler.removeCallbacks(
+            uiRunnable
+        )
     }
 }
