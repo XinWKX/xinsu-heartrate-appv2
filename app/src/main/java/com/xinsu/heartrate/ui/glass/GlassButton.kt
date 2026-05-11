@@ -1,148 +1,50 @@
 package com.xinsu.heartrate.ui.glass
 
-import android.animation.SpringAnimation
-import android.animation.SpringForce
 import android.content.Context
 import android.graphics.Color
-import android.view.Gravity
-import android.widget.FrameLayout
-import android.widget.TextView
+import android.graphics.drawable.GradientDrawable
+import android.util.AttributeSet
+import androidx.appcompat.widget.AppCompatButton
 
-class GlassButton(
+class GlassButton @JvmOverloads constructor(
 
-    context: Context
+    context: Context,
 
-) : FrameLayout(context) {
+    attrs: AttributeSet? = null
 
-    private val panel =
-        GlassPanel(context)
-
-    private val textView =
-        TextView(context)
+) : AppCompatButton(
+    context,
+    attrs
+) {
 
     init {
 
-        initUI()
+        text = "CONNECT"
 
-        initAnimation()
-    }
+        textSize = 18f
 
-    /**
-     * 初始化
-     */
-    private fun initUI() {
-
-        layoutParams = LayoutParams(
-
-            320,
-
-            120
-        )
-
-        addView(
-
-            panel,
-
-            LayoutParams(
-
-                LayoutParams.MATCH_PARENT,
-
-                LayoutParams.MATCH_PARENT
-            )
-        )
-
-        textView.text = "CONNECT"
-
-        textView.textSize = 16f
-
-        textView.setTextColor(
+        setTextColor(
             Color.WHITE
         )
 
-        textView.gravity =
-            Gravity.CENTER
+        val bg =
+            GradientDrawable()
 
-        addView(
+        bg.cornerRadius = 42f
 
-            textView,
-
-            LayoutParams(
-
-                LayoutParams.MATCH_PARENT,
-
-                LayoutParams.MATCH_PARENT
+        bg.setColor(
+            Color.parseColor(
+                "#33FFFFFF"
             )
         )
-    }
 
-    /**
-     * 弹性动画
-     */
-    private fun initAnimation() {
+        background = bg
 
-        setOnTouchListener {
-
-                _, event ->
-
-            when (event.action) {
-
-                android.view.MotionEvent
-                    .ACTION_DOWN -> {
-
-                    animateScale(0.94f)
-                }
-
-                android.view.MotionEvent
-                    .ACTION_UP,
-
-                android.view.MotionEvent
-                    .ACTION_CANCEL -> {
-
-                    animateScale(1f)
-                }
-            }
-
-            false
-        }
-    }
-
-    /**
-     * Spring Scale
-     */
-    private fun animateScale(
-        target: Float
-    ) {
-
-        SpringAnimation(
-            this,
-            SCALE_X,
-            target
-        ).apply {
-
-            spring.stiffness =
-                SpringForce
-                    .STIFFNESS_LOW
-
-            spring.dampingRatio =
-                SpringForce
-                    .DAMPING_RATIO_MEDIUM_BOUNCY
-
-        }.start()
-
-        SpringAnimation(
-            this,
-            SCALE_Y,
-            target
-        ).apply {
-
-            spring.stiffness =
-                SpringForce
-                    .STIFFNESS_LOW
-
-            spring.dampingRatio =
-                SpringForce
-                    .DAMPING_RATIO_MEDIUM_BOUNCY
-
-        }.start()
+        setPadding(
+            60,
+            30,
+            60,
+            30
+        )
     }
 }
