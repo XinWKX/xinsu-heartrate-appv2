@@ -20,6 +20,13 @@
         android:theme="@style/Theme.Xinsu">
 
         <activity
+
+            android:name=".crash.ui.CrashActivity"
+
+            android:exported="false" />
+
+        <activity
+
             android:name=".ui.screens.MainActivity"
 
             android:exported="true">
