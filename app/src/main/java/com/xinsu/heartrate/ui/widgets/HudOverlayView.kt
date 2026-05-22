@@ -7,11 +7,12 @@ import android.view.Gravity
 import android.widget.FrameLayout
 import com.xinsu.heartrate.bluetooth.core.BleState
 import com.xinsu.heartrate.bluetooth.core.BleStateManager
-import com.xinsu.heartrate.bluetooth.model.HeartRateDevice
+import com.xinsu.heartrate.bluetooth.runtime.BleRuntimeController
 import com.xinsu.heartrate.bluetooth.ui.DeviceListPanel
 import com.xinsu.heartrate.bluetooth.ui.ScanRadarView
 import com.xinsu.heartrate.bluetooth.ui.state.BleUiStateController
 import com.xinsu.heartrate.connection.effects.ConnectionAnimationView
+import com.xinsu.heartrate.core.pulse.PulseRuntimeEngine
 import com.xinsu.heartrate.settings.ui.SettingsPanel
 import com.xinsu.heartrate.ui.glass.GlassButton
 import com.xinsu.heartrate.ui.hud.BluetoothHud
@@ -45,6 +46,9 @@ class HudOverlayView(
     private lateinit var uiStateController:
             BleUiStateController
 
+    private lateinit var bleRuntime:
+            BleRuntimeController
+
     private val handler =
         Handler(
             Looper.getMainLooper()
@@ -55,11 +59,13 @@ class HudOverlayView(
 
             override fun run() {
 
+                PulseRuntimeEngine.update()
+
                 uiStateController.update()
 
                 handler.postDelayed(
                     this,
-                    120
+                    16
                 )
             }
         }
@@ -68,9 +74,14 @@ class HudOverlayView(
 
         initUI()
 
+        initBle()
+
         handler.post(uiRunnable)
     }
 
+    /**
+     * 初始化 UI
+     */
     private fun initUI() {
 
         // Top Bar
@@ -142,13 +153,10 @@ class HudOverlayView(
         val heartParams =
             LayoutParams(
 
-                LayoutParams.WRAP_CONTENT,
+                LayoutParams.MATCH_PARENT,
 
-                LayoutParams.WRAP_CONTENT
+                LayoutParams.MATCH_PARENT
             )
-
-        heartParams.gravity =
-            Gravity.CENTER
 
         addView(
             heartHud,
@@ -162,9 +170,9 @@ class HudOverlayView(
         val bluetoothParams =
             LayoutParams(
 
-                360,
+                500,
 
-                100
+                120
             )
 
         bluetoothParams.gravity =
@@ -172,7 +180,7 @@ class HudOverlayView(
                     Gravity.CENTER_HORIZONTAL
 
         bluetoothParams.bottomMargin =
-            280
+            260
 
         addView(
             bluetoothHud,
@@ -285,7 +293,7 @@ class HudOverlayView(
         // Click
         connectButton.setOnClickListener {
 
-            simulateConnection()
+            startBle()
         }
 
         // Long Click
@@ -295,75 +303,56 @@ class HudOverlayView(
 
             true
         }
-
-        mockDevices()
     }
 
     /**
-     * 模拟连接流程
+     * 初始化 BLE
      */
-    private fun simulateConnection() {
+    private fun initBle() {
+
+        bleRuntime =
+            BleRuntimeController(
+                context
+            )
+
+        bleRuntime.onDevicesUpdated = {
+
+            devices ->
+
+            devicePanel.updateDevices(
+                devices
+            )
+        }
+
+        bleRuntime.onConnectionStateChanged = {
+
+            connected ->
+
+            if (connected) {
+
+                BleStateManager.setState(
+                    BleState.CONNECTED
+                )
+
+            } else {
+
+                BleStateManager.setState(
+                    BleState.DISCONNECTED
+                )
+            }
+        }
+    }
+
+    /**
+     * 开始 BLE
+     */
+    private fun startBle() {
 
         BleStateManager.setState(
             BleState.SCANNING
         )
 
-        handler.postDelayed({
-
-            BleStateManager.setState(
-                BleState.CONNECTING
-            )
-
-        }, 1200)
-
-        handler.postDelayed({
-
-            BleStateManager.setState(
-                BleState.CONNECTED
-            )
-
-        }, 4200)
-    }
-
-    /**
-     * Mock Devices
-     */
-    private fun mockDevices() {
-
-        val devices =
-            listOf(
-
-                HeartRateDevice(
-
-                    "Polar H10",
-
-                    "00:11:22",
-
-                    -42
-                ),
-
-                HeartRateDevice(
-
-                    "Mi Band 9",
-
-                    "11:22:33",
-
-                    -58
-                ),
-
-                HeartRateDevice(
-
-                    "Galaxy Watch",
-
-                    "22:33:44",
-
-                    -63
-                )
-            )
-
-        devicePanel.updateDevices(
-            devices
-        )
+        bleRuntime.startScan()
     }
 
     /**
@@ -411,5 +400,7 @@ class HudOverlayView(
         handler.removeCallbacks(
             uiRunnable
         )
+
+        bleRuntime.stopScan()
     }
 }
