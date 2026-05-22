@@ -1,6 +1,7 @@
 package com.xinsu.heartrate.crash.ui
 
 import android.os.Bundle
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
@@ -12,13 +13,20 @@ class CrashActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
 
+        val log = intent.getStringExtra(
+            "crash_log"
+        ) ?: "No Crash Log"
+
         val textView = TextView(this)
 
-        textView.text =
-            "应用发生崩溃\\n\\n请导出日志"
+        textView.text = log
 
-        textView.textSize = 18f
+        textView.textSize = 14f
 
-        setContentView(textView)
+        val scrollView = ScrollView(this)
+
+        scrollView.addView(textView)
+
+        setContentView(scrollView)
     }
 }
