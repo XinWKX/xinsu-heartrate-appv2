@@ -1,22 +1,12 @@
 package com.xinsu.heartrate.ui.screens
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import com.xinsu.heartrate.bluetooth.runtime.BlePermissionHelper
 import com.xinsu.heartrate.ui.widgets.RootHudLayout
 
 class MainActivity :
     AppCompatActivity() {
-
-    companion object {
-
-        private const val REQUEST_BLE =
-            1001
-    }
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -26,100 +16,35 @@ class MainActivity :
             savedInstanceState
         )
 
-        requestBlePermissions()
+        checkPermissions()
     }
 
     /**
-     * BLE 权限
+     * 检查 BLE 权限
      */
-    private fun requestBlePermissions() {
-
-        val permissions =
-            mutableListOf<String>()
-
-        // Android 12+
-        if (
-            Build.VERSION.SDK_INT >=
-            Build.VERSION_CODES.S
-        ) {
-
-            if (
-
-                ContextCompat.checkSelfPermission(
-
-                    this,
-
-                    Manifest.permission.BLUETOOTH_SCAN
-
-                ) !=
-                PackageManager.PERMISSION_GRANTED
-            ) {
-
-                permissions.add(
-                    Manifest.permission.BLUETOOTH_SCAN
-                )
-            }
-
-            if (
-
-                ContextCompat.checkSelfPermission(
-
-                    this,
-
-                    Manifest.permission.BLUETOOTH_CONNECT
-
-                ) !=
-                PackageManager.PERMISSION_GRANTED
-            ) {
-
-                permissions.add(
-                    Manifest.permission.BLUETOOTH_CONNECT
-                )
-            }
-        }
-
-        // Android 10 / 11
-        else {
-
-            if (
-
-                ContextCompat.checkSelfPermission(
-
-                    this,
-
-                    Manifest.permission.ACCESS_FINE_LOCATION
-
-                ) !=
-                PackageManager.PERMISSION_GRANTED
-            ) {
-
-                permissions.add(
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            }
-        }
+    private fun checkPermissions() {
 
         if (
-            permissions.isNotEmpty()
-        ) {
 
-            ActivityCompat.requestPermissions(
-
-                this,
-
-                permissions.toTypedArray(),
-
-                REQUEST_BLE
+            BlePermissionHelper.hasPermissions(
+                this
             )
+
+        ) {
+
+            initUI()
 
         } else {
 
-            initUI()
+            BlePermissionHelper
+                .requestPermissions(
+                    this
+                )
         }
     }
 
     /**
-     * 权限结果
+     * 权限回调
      */
     override fun onRequestPermissionsResult(
 
@@ -140,18 +65,20 @@ class MainActivity :
         )
 
         if (
-            requestCode == REQUEST_BLE
+
+            requestCode ==
+
+            BlePermissionHelper.REQUEST_CODE
+
         ) {
 
-            val granted =
+            if (
 
-                grantResults.all {
+                BlePermissionHelper.hasPermissions(
+                    this
+                )
 
-                    it ==
-                    PackageManager.PERMISSION_GRANTED
-                }
-
-            if (granted) {
+            ) {
 
                 initUI()
             }
