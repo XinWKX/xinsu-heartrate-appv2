@@ -1,108 +1,115 @@
 package com.xinsu.heartrate.ui.hud
 
 import android.content.Context
-import android.graphics.Color
-import android.view.Gravity
-import android.widget.FrameLayout
-import android.widget.TextView
-import com.xinsu.heartrate.core.pulse.PulseEngine
+import android.graphics.*
+import android.view.View
+import com.xinsu.heartrate.bluetooth.data.HeartRateRepository
+import kotlin.math.min
 
 class HeartRateHud(
-
     context: Context
+) : View(context) {
 
-) : FrameLayout(context) {
+    private val bpmPaint = Paint().apply {
 
-    private val bpmText =
-        TextView(context)
+        color = Color.WHITE
 
-    private val labelText =
-        TextView(context)
+        textAlign = Paint.Align.CENTER
 
-    init {
+        isAntiAlias = true
 
-        initUI()
+        typeface = Typeface.DEFAULT_BOLD
     }
 
-    private fun initUI() {
+    private val labelPaint = Paint().apply {
 
-        bpmText.text = "72"
-
-        bpmText.textSize = 84f
-
-        bpmText.setTextColor(
-            Color.WHITE
+        color = Color.argb(
+            180,
+            255,
+            255,
+            255
         )
 
-        val bpmParams =
-            LayoutParams(
+        textAlign = Paint.Align.CENTER
 
-                LayoutParams.WRAP_CONTENT,
+        textSize = 42f
 
-                LayoutParams.WRAP_CONTENT
-            )
-
-        bpmParams.gravity =
-            Gravity.CENTER_HORIZONTAL
-
-        addView(
-            bpmText,
-            bpmParams
-        )
-
-        labelText.text =
-            "BPM"
-
-        labelText.textSize = 14f
-
-        labelText.letterSpacing =
-            0.2f
-
-        labelText.setTextColor(
-
-            Color.argb(
-
-                180,
-
-                255,
-
-                255,
-
-                255
-            )
-        )
-
-        val labelParams =
-            LayoutParams(
-
-                LayoutParams.WRAP_CONTENT,
-
-                LayoutParams.WRAP_CONTENT
-            )
-
-        labelParams.gravity =
-            Gravity.CENTER_HORIZONTAL
-
-        labelParams.topMargin =
-            120
-
-        addView(
-            labelText,
-            labelParams
-        )
+        isAntiAlias = true
     }
 
-    /**
-     * 更新 BPM
-     */
-    fun updateBpm(
-        bpm: Int
+    private val ringPaint = Paint().apply {
+
+        style = Paint.Style.STROKE
+
+        strokeWidth = 8f
+
+        color = Color.argb(
+            120,
+            255,
+            255,
+            255
+        )
+
+        isAntiAlias = true
+    }
+
+    override fun onDraw(
+        canvas: Canvas
     ) {
 
-        bpmText.text =
-            bpm.toString()
+        super.onDraw(canvas)
 
-        PulseEngine.bpm =
-            bpm.toFloat()
+        val cx = width / 2f
+
+        val cy = height / 2f
+
+        val bpm =
+            HeartRateRepository.currentBpm
+
+        val radius =
+
+            min(width, height)
+                * 0.28f
+
+        canvas.drawCircle(
+
+            cx,
+
+            cy,
+
+            radius,
+
+            ringPaint
+        )
+
+        bpmPaint.textSize =
+            radius * 0.55f
+
+        canvas.drawText(
+
+            if (bpm <= 0)
+                "--"
+            else
+                bpm.toString(),
+
+            cx,
+
+            cy + 40f,
+
+            bpmPaint
+        )
+
+        canvas.drawText(
+
+            "BPM",
+
+            cx,
+
+            cy + radius + 70f,
+
+            labelPaint
+        )
+
+        invalidate()
     }
 }
