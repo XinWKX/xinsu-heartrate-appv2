@@ -20,7 +20,8 @@ class MainActivity : AppCompatActivity() {
      */
     private fun initUI() {
 
-        val root = RootHudLayout(this)
+        val root =
+            RootHudLayout(this)
 
         setContentView(root)
     }
