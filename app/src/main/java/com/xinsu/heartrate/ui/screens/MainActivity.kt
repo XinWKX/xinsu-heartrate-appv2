@@ -1,19 +1,22 @@
 package com.xinsu.heartrate.ui.screens
 
-import android.graphics.Color
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
-import android.widget.FrameLayout
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.xinsu.heartrate.bluetooth.permission.BlePermissionManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.xinsu.heartrate.ui.widgets.RootHudLayout
 
 class MainActivity :
     AppCompatActivity() {
 
-    private lateinit var
-            permissionManager:
-            BlePermissionManager
+    companion object {
+
+        private const val REQUEST_BLE =
+            1001
+    }
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -23,32 +26,101 @@ class MainActivity :
             savedInstanceState
         )
 
-        permissionManager =
-            BlePermissionManager(this)
+        requestBlePermissions()
+    }
 
-        try {
+    /**
+     * BLE 权限
+     */
+    private fun requestBlePermissions() {
 
-            if (
-                permissionManager
-                    .hasPermissions()
-            ) {
+        val permissions =
+            mutableListOf<String>()
 
-                initUI()
-
-            } else {
-
-                permissionManager
-                    .requestPermissions()
-            }
-
-        } catch (
-            e: Exception
+        // Android 12+
+        if (
+            Build.VERSION.SDK_INT >=
+            Build.VERSION_CODES.S
         ) {
 
-            showErrorScreen(e)
+            if (
+
+                ContextCompat.checkSelfPermission(
+
+                    this,
+
+                    Manifest.permission.BLUETOOTH_SCAN
+
+                ) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+
+                permissions.add(
+                    Manifest.permission.BLUETOOTH_SCAN
+                )
+            }
+
+            if (
+
+                ContextCompat.checkSelfPermission(
+
+                    this,
+
+                    Manifest.permission.BLUETOOTH_CONNECT
+
+                ) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+
+                permissions.add(
+                    Manifest.permission.BLUETOOTH_CONNECT
+                )
+            }
+        }
+
+        // Android 10 / 11
+        else {
+
+            if (
+
+                ContextCompat.checkSelfPermission(
+
+                    this,
+
+                    Manifest.permission.ACCESS_FINE_LOCATION
+
+                ) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+
+                permissions.add(
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
+            }
+        }
+
+        if (
+            permissions.isNotEmpty()
+        ) {
+
+            ActivityCompat.requestPermissions(
+
+                this,
+
+                permissions.toTypedArray(),
+
+                REQUEST_BLE
+            )
+
+        } else {
+
+            initUI()
         }
     }
 
+    /**
+     * 权限结果
+     */
     override fun onRequestPermissionsResult(
 
         requestCode: Int,
@@ -68,27 +140,26 @@ class MainActivity :
         )
 
         if (
-            requestCode ==
-            BlePermissionManager
-                .REQUEST_CODE
+            requestCode == REQUEST_BLE
         ) {
 
-            if (
-                permissionManager
-                    .hasPermissions()
-            ) {
+            val granted =
+
+                grantResults.all {
+
+                    it ==
+                    PackageManager.PERMISSION_GRANTED
+                }
+
+            if (granted) {
 
                 initUI()
-
-            } else {
-
-                finish()
             }
         }
     }
 
     /**
-     * 初始化主界面
+     * 初始化 UI
      */
     private fun initUI() {
 
@@ -96,61 +167,5 @@ class MainActivity :
             RootHudLayout(this)
 
         setContentView(root)
-    }
-
-    /**
-     * 错误页面
-     */
-    private fun showErrorScreen(
-        throwable: Throwable
-    ) {
-
-        val layout =
-            FrameLayout(this)
-
-        layout.setBackgroundColor(
-            Color.BLACK
-        )
-
-        val textView =
-            TextView(this)
-
-        textView.setTextColor(
-            Color.WHITE
-        )
-
-        textView.textSize = 14f
-
-        textView.text =
-            buildString {
-
-                append(
-                    "UI 初始化失败\n\n"
-                )
-
-                append(
-
-                    throwable
-                        .javaClass
-                        .simpleName
-                )
-
-                append("\n\n")
-
-                append(
-                    throwable.message
-                )
-
-                append("\n\n")
-
-                append(
-                    throwable
-                        .stackTraceToString()
-                )
-            }
-
-        layout.addView(textView)
-
-        setContentView(layout)
     }
     }
