@@ -1,51 +1,83 @@
 package com.xinsu.heartrate.connection.effects
 
 import android.content.Context
-import android.graphics.Canvas
+import android.graphics.*
 import android.view.View
-import com.xinsu.heartrate.core.render.RenderListener
-import com.xinsu.heartrate.core.render.RenderLoop
+import kotlin.math.sin
 
 class ConnectionAnimationView(
-
     context: Context
+) : View(context) {
 
-) : View(context),
-    RenderListener {
+    private var mode =
+        Mode.HIDDEN
 
-    private val ring =
-        ConnectionRing()
+    private var animTime = 0f
 
-    private val particles =
-        ConnectionParticles()
+    private enum class Mode {
 
-    init {
+        HIDDEN,
 
-        alpha = 0f
+        SCANNING,
 
-        RenderLoop.addListener(this)
+        CONNECTING,
+
+        CONNECTED,
+
+        DISCONNECTED,
+
+        RECONNECTING
     }
 
-    override fun onDetachedFromWindow() {
+    private val paint = Paint().apply {
 
-        super.onDetachedFromWindow()
+        style = Paint.Style.STROKE
 
-        RenderLoop.removeListener(this)
+        strokeWidth = 12f
+
+        isAntiAlias = true
     }
 
-    override fun onRender(
-        deltaTime: Float
-    ) {
+    fun showScanning() {
 
-        ring.update(
-            deltaTime
-        )
+        mode = Mode.SCANNING
 
-        particles.update(
-            deltaTime
-        )
+        invalidate()
+    }
 
-        postInvalidateOnAnimation()
+    fun showConnecting() {
+
+        mode = Mode.CONNECTING
+
+        invalidate()
+    }
+
+    fun showConnected() {
+
+        mode = Mode.CONNECTED
+
+        invalidate()
+    }
+
+    fun showDisconnected() {
+
+        mode = Mode.DISCONNECTED
+
+        invalidate()
+    }
+
+    fun showReconnecting() {
+
+        mode = Mode.RECONNECTING
+
+        invalidate()
+    }
+
+    fun hide() {
+
+        mode = Mode.HIDDEN
+
+        invalidate()
     }
 
     override fun onDraw(
@@ -54,50 +86,64 @@ class ConnectionAnimationView(
 
         super.onDraw(canvas)
 
-        particles.render(
+        if (
+            mode == Mode.HIDDEN
+        ) {
 
-            canvas,
+            return
+        }
 
-            width,
+        animTime += 0.05f
 
-            height
+        val cx = width / 2f
+
+        val cy = height / 2f
+
+        val pulse = (
+
+            sin(animTime) * 0.5f
+                    + 0.5f
+
+        ).toFloat()
+
+        val radius =
+
+            180f +
+
+            pulse * 40f
+
+        paint.color = when (mode) {
+
+            Mode.SCANNING ->
+                Color.CYAN
+
+            Mode.CONNECTING ->
+                Color.YELLOW
+
+            Mode.CONNECTED ->
+                Color.GREEN
+
+            Mode.DISCONNECTED ->
+                Color.RED
+
+            Mode.RECONNECTING ->
+                Color.MAGENTA
+
+            else ->
+                Color.TRANSPARENT
+        }
+
+        canvas.drawCircle(
+
+            cx,
+
+            cy,
+
+            radius,
+
+            paint
         )
 
-        ring.render(
-
-            canvas,
-
-            width,
-
-            height
-        )
+        invalidate()
     }
-
-    /**
-     * 开始动画
-     */
-    fun show() {
-
-        animate()
-
-            .alpha(1f)
-
-            .setDuration(600)
-
-            .start()
-    }
-
-    /**
-     * 结束动画
-     */
-    fun hide() {
-
-        animate()
-
-            .alpha(0f)
-
-            .setDuration(400)
-
-            .start()
-    }
-    }
+}
