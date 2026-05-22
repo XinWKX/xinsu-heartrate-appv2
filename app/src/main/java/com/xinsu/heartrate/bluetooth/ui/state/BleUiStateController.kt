@@ -7,6 +7,7 @@ import com.xinsu.heartrate.bluetooth.ui.ScanRadarView
 import com.xinsu.heartrate.connection.effects.ConnectionAnimationView
 import com.xinsu.heartrate.ui.hud.BluetoothHud
 import com.xinsu.heartrate.ui.hud.HeartRateHud
+import kotlin.random.Random
 
 class BleUiStateController(
 
@@ -26,44 +27,29 @@ class BleUiStateController(
     HeartRateHud
 ) {
 
-    private var lastState:
-            BleState? = null
-
     fun update() {
 
-        val state =
+        when (
             BleStateManager.getState()
-
-        if (
-            state == lastState
         ) {
-
-            return
-        }
-
-        lastState = state
-
-        when (state) {
 
             BleState.IDLE -> {
 
-                radarView.stopScan()
-
-                connectionView.hide()
+                bluetoothHud.invalidate()
             }
 
             BleState.SCANNING -> {
 
                 radarView.startScan()
 
-                connectionView.showScanning()
+                bluetoothHud.invalidate()
             }
 
             BleState.CONNECTING -> {
 
-                radarView.startScan()
-
                 connectionView.showConnecting()
+
+                bluetoothHud.invalidate()
             }
 
             BleState.CONNECTED -> {
@@ -71,6 +57,18 @@ class BleUiStateController(
                 radarView.stopScan()
 
                 connectionView.showConnected()
+
+                bluetoothHud.invalidate()
+
+                val bpm =
+                    Random.nextInt(
+                        65,
+                        95
+                    )
+
+                heartHud.updateHeartRate(
+                    bpm
+                )
             }
 
             BleState.DISCONNECTED -> {
@@ -78,13 +76,17 @@ class BleUiStateController(
                 radarView.stopScan()
 
                 connectionView.showDisconnected()
+
+                bluetoothHud.invalidate()
+
+                heartHud.updateHeartRate(
+                    0
+                )
             }
 
             BleState.RECONNECTING -> {
 
-                radarView.startScan()
-
-                connectionView.showReconnecting()
+                bluetoothHud.invalidate()
             }
         }
     }
