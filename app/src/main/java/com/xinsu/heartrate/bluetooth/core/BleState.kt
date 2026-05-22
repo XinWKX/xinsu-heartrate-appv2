@@ -12,5 +12,5 @@ enum class BleState {
 
     DISCONNECTED,
 
-    FAILED
+    RECONNECTING
 }
