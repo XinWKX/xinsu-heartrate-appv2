@@ -1,27 +1,89 @@
-package com.xinsu.heartrate
+package com.xinsu.heartrate.ui.screens
 
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.xinsu.heartrate.bluetooth.permission.BlePermissionManager
 import com.xinsu.heartrate.ui.widgets.RootHudLayout
 
-class MainActivity : AppCompatActivity() {
+class MainActivity :
+    AppCompatActivity() {
+
+    private lateinit var
+            permissionManager:
+            BlePermissionManager
 
     override fun onCreate(
         savedInstanceState: Bundle?
     ) {
 
-        super.onCreate(savedInstanceState)
+        super.onCreate(
+            savedInstanceState
+        )
+
+        permissionManager =
+            BlePermissionManager(this)
 
         try {
 
-            initUI()
+            if (
+                permissionManager
+                    .hasPermissions()
+            ) {
 
-        } catch (e: Exception) {
+                initUI()
+
+            } else {
+
+                permissionManager
+                    .requestPermissions()
+            }
+
+        } catch (
+            e: Exception
+        ) {
 
             showErrorScreen(e)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+
+        requestCode: Int,
+
+        permissions: Array<out String>,
+
+        grantResults: IntArray
+    ) {
+
+        super.onRequestPermissionsResult(
+
+            requestCode,
+
+            permissions,
+
+            grantResults
+        )
+
+        if (
+            requestCode ==
+            BlePermissionManager
+                .REQUEST_CODE
+        ) {
+
+            if (
+                permissionManager
+                    .hasPermissions()
+            ) {
+
+                initUI()
+
+            } else {
+
+                finish()
+            }
         }
     }
 
@@ -37,8 +99,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * 如果 RootHudLayout 崩溃
-     * 直接显示异常内容
+     * 错误页面
      */
     private fun showErrorScreen(
         throwable: Throwable
@@ -63,10 +124,15 @@ class MainActivity : AppCompatActivity() {
         textView.text =
             buildString {
 
-                append("UI 初始化失败\n\n")
+                append(
+                    "UI 初始化失败\n\n"
+                )
 
                 append(
-                    throwable.javaClass.simpleName
+
+                    throwable
+                        .javaClass
+                        .simpleName
                 )
 
                 append("\n\n")
@@ -78,7 +144,8 @@ class MainActivity : AppCompatActivity() {
                 append("\n\n")
 
                 append(
-                    throwable.stackTraceToString()
+                    throwable
+                        .stackTraceToString()
                 )
             }
 
@@ -86,4 +153,4 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(layout)
     }
-}
+    }
