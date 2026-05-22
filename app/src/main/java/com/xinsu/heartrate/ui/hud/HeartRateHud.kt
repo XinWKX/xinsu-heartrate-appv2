@@ -3,54 +3,61 @@ package com.xinsu.heartrate.ui.hud
 import android.content.Context
 import android.graphics.*
 import android.view.View
-import com.xinsu.heartrate.bluetooth.data.HeartRateRepository
-import kotlin.math.min
+import kotlin.math.sin
 
 class HeartRateHud(
     context: Context
 ) : View(context) {
 
-    private val bpmPaint = Paint().apply {
+    private var bpm =
+        72
 
-        color = Color.WHITE
+    private var anim =
+        0f
 
-        textAlign = Paint.Align.CENTER
+    private val circlePaint =
+        Paint().apply {
 
-        isAntiAlias = true
+            style = Paint.Style.STROKE
 
-        typeface = Typeface.DEFAULT_BOLD
-    }
+            strokeWidth = 10f
 
-    private val labelPaint = Paint().apply {
+            color = Color.CYAN
 
-        color = Color.argb(
-            180,
-            255,
-            255,
-            255
-        )
+            isAntiAlias = true
+        }
 
-        textAlign = Paint.Align.CENTER
+    private val bpmPaint =
+        Paint().apply {
 
-        textSize = 42f
+            color = Color.WHITE
 
-        isAntiAlias = true
-    }
+            textSize = 110f
 
-    private val ringPaint = Paint().apply {
+            textAlign = Paint.Align.CENTER
 
-        style = Paint.Style.STROKE
+            isAntiAlias = true
+        }
 
-        strokeWidth = 8f
+    private val subPaint =
+        Paint().apply {
 
-        color = Color.argb(
-            120,
-            255,
-            255,
-            255
-        )
+            color = Color.GRAY
 
-        isAntiAlias = true
+            textSize = 34f
+
+            textAlign = Paint.Align.CENTER
+
+            isAntiAlias = true
+        }
+
+    fun updateHeartRate(
+        value: Int
+    ) {
+
+        bpm = value
+
+        invalidate()
     }
 
     override fun onDraw(
@@ -63,13 +70,20 @@ class HeartRateHud(
 
         val cy = height / 2f
 
-        val bpm =
-            HeartRateRepository.currentBpm
+        anim += 0.08f
+
+        val pulse = (
+
+            sin(anim) * 0.5f
+                    + 0.5f
+
+        ).toFloat()
 
         val radius =
 
-            min(width, height)
-                * 0.28f
+            180f +
+
+            pulse * 18f
 
         canvas.drawCircle(
 
@@ -79,22 +93,16 @@ class HeartRateHud(
 
             radius,
 
-            ringPaint
+            circlePaint
         )
-
-        bpmPaint.textSize =
-            radius * 0.55f
 
         canvas.drawText(
 
-            if (bpm <= 0)
-                "--"
-            else
-                bpm.toString(),
+            bpm.toString(),
 
             cx,
 
-            cy + 40f,
+            cy + 25f,
 
             bpmPaint
         )
@@ -105,9 +113,9 @@ class HeartRateHud(
 
             cx,
 
-            cy + radius + 70f,
+            cy + 90f,
 
-            labelPaint
+            subPaint
         )
 
         invalidate()
