@@ -1,93 +1,182 @@
-package com.xinsu.heartrate.bluetooth.ui.state
+package com.xinsu.heartrate.bluetooth.ui
 
-import com.xinsu.heartrate.bluetooth.core.BleState
-import com.xinsu.heartrate.bluetooth.core.BleStateManager
-import com.xinsu.heartrate.bluetooth.ui.DeviceListPanel
-import com.xinsu.heartrate.bluetooth.ui.ScanRadarView
-import com.xinsu.heartrate.connection.effects.ConnectionAnimationView
-import com.xinsu.heartrate.ui.hud.BluetoothHud
-import com.xinsu.heartrate.ui.hud.HeartRateHud
-import kotlin.random.Random
+import android.content.Context
+import android.graphics.*
+import android.view.View
+import kotlin.math.cos
+import kotlin.math.sin
 
-class BleUiStateController(
+class ScanRadarView(
+    context: Context
+) : View(context) {
 
-    private val radarView:
-    ScanRadarView,
+    private var scanning =
+        false
 
-    private val connectionView:
-    ConnectionAnimationView,
+    private var sweepAngle =
+        0f
 
-    private val devicePanel:
-    DeviceListPanel,
+    private val gridPaint =
+        Paint().apply {
 
-    private val bluetoothHud:
-    BluetoothHud,
+            style = Paint.Style.STROKE
 
-    private val heartHud:
-    HeartRateHud
-) {
+            strokeWidth = 2f
 
-    fun update() {
+            color = Color.argb(
+                80,
+                0,
+                255,
+                255
+            )
 
-        when (
-            BleStateManager.getState()
-        ) {
+            isAntiAlias = true
+        }
 
-            BleState.IDLE -> {
+    private val sweepPaint =
+        Paint().apply {
 
-                bluetoothHud.invalidate()
-            }
+            style = Paint.Style.FILL
 
-            BleState.SCANNING -> {
+            shader = SweepGradient(
 
-                radarView.startScan()
+                0f,
 
-                bluetoothHud.invalidate()
-            }
+                0f,
 
-            BleState.CONNECTING -> {
+                intArrayOf(
 
-                connectionView.showConnecting()
+                    Color.TRANSPARENT,
 
-                bluetoothHud.invalidate()
-            }
+                    Color.CYAN
+                ),
 
-            BleState.CONNECTED -> {
+                null
+            )
 
-                radarView.stopScan()
+            isAntiAlias = true
+        }
 
-                connectionView.showConnected()
+    fun startScan() {
 
-                bluetoothHud.invalidate()
+        scanning = true
 
-                val bpm =
-                    Random.nextInt(
-                        65,
-                        95
-                    )
+        invalidate()
+    }
 
-                heartHud.updateHeartRate(
-                    bpm
+    fun stopScan() {
+
+        scanning = false
+
+        invalidate()
+    }
+
+    override fun onDraw(
+        canvas: Canvas
+    ) {
+
+        super.onDraw(canvas)
+
+        val cx =
+            width / 2f
+
+        val cy =
+            height / 2f
+
+        val radius =
+            width.coerceAtMost(
+                height
+            ) / 2f - 20f
+
+        canvas.drawCircle(
+            cx,
+            cy,
+            radius,
+            gridPaint
+        )
+
+        canvas.drawCircle(
+            cx,
+            cy,
+            radius * 0.7f,
+            gridPaint
+        )
+
+        canvas.drawCircle(
+            cx,
+            cy,
+            radius * 0.4f,
+            gridPaint
+        )
+
+        repeat(4) {
+
+            val angle =
+                Math.toRadians(
+                    (it * 90).toDouble()
                 )
-            }
 
-            BleState.DISCONNECTED -> {
+            val x =
+                cx +
+                cos(angle)
+                    .toFloat() * radius
 
-                radarView.stopScan()
+            val y =
+                cy +
+                sin(angle)
+                    .toFloat() * radius
 
-                connectionView.showDisconnected()
+            canvas.drawLine(
+                cx,
+                cy,
+                x,
+                y,
+                gridPaint
+            )
+        }
 
-                bluetoothHud.invalidate()
+        if (scanning) {
 
-                heartHud.updateHeartRate(
-                    0
-                )
-            }
+            sweepAngle += 4f
 
-            BleState.RECONNECTING -> {
+            canvas.save()
 
-                bluetoothHud.invalidate()
-            }
+            canvas.translate(
+                cx,
+                cy
+            )
+
+            canvas.rotate(
+                sweepAngle
+            )
+
+            val rect = RectF(
+
+                -radius,
+
+                -radius,
+
+                radius,
+
+                radius
+            )
+
+            canvas.drawArc(
+
+                rect,
+
+                0f,
+
+                45f,
+
+                true,
+
+                sweepPaint
+            )
+
+            canvas.restore()
+
+            invalidate()
         }
     }
 }
