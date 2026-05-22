@@ -9,71 +9,86 @@ class DeviceListPanel(
     context: Context
 ) : View(context) {
 
-    private var devices =
-        emptyList<HeartRateDevice>()
+    private val devices =
+        mutableListOf<HeartRateDevice>()
 
-    private val cardPaint = Paint().apply {
+    private val backgroundPaint =
+        Paint().apply {
 
-        color = Color.argb(
-            40,
-            255,
-            255,
-            255
-        )
+            color = Color.argb(
+                60,
+                15,
+                15,
+                15
+            )
 
-        isAntiAlias = true
-    }
+            isAntiAlias = true
+        }
 
-    private val borderPaint = Paint().apply {
+    private val borderPaint =
+        Paint().apply {
 
-        style = Paint.Style.STROKE
+            style = Paint.Style.STROKE
 
-        strokeWidth = 2f
+            strokeWidth = 2f
 
-        color = Color.argb(
-            80,
-            255,
-            255,
-            255
-        )
+            color = Color.argb(
+                100,
+                255,
+                255,
+                255
+            )
 
-        isAntiAlias = true
-    }
+            isAntiAlias = true
+        }
 
-    private val titlePaint = Paint().apply {
+    private val titlePaint =
+        Paint().apply {
 
-        color = Color.WHITE
+            color = Color.WHITE
 
-        textSize = 42f
+            textSize = 42f
 
-        isAntiAlias = true
+            isAntiAlias = true
+        }
 
-        typeface = Typeface.DEFAULT_BOLD
-    }
+    private val namePaint =
+        Paint().apply {
 
-    private val infoPaint = Paint().apply {
+            color = Color.WHITE
 
-        color = Color.argb(
-            180,
-            255,
-            255,
-            255
-        )
+            textSize = 34f
 
-        textSize = 30f
+            isAntiAlias = true
+        }
 
-        isAntiAlias = true
-    }
+    private val infoPaint =
+        Paint().apply {
 
-    /**
-     * 更新设备
-     */
+            color = Color.GRAY
+
+            textSize = 26f
+
+            isAntiAlias = true
+        }
+
+    private val heartPaint =
+        Paint().apply {
+
+            color = Color.CYAN
+
+            textSize = 24f
+
+            isAntiAlias = true
+        }
+
     fun updateDevices(
-        newDevices:
-        List<HeartRateDevice>
+        list: List<HeartRateDevice>
     ) {
 
-        devices = newDevices
+        devices.clear()
+
+        devices.addAll(list)
 
         invalidate()
     }
@@ -84,53 +99,15 @@ class DeviceListPanel(
 
         super.onDraw(canvas)
 
-        val startY = 40f
-
-        val spacing = 190f
-
-        devices.forEachIndexed {
-
-            index,
-            device ->
-
-            val top =
-
-                startY +
-
-                index * spacing
-
-            drawDeviceCard(
-
-                canvas,
-
-                device,
-
-                top
-            )
-        }
-    }
-
-    /**
-     * 绘制设备卡片
-     */
-    private fun drawDeviceCard(
-
-        canvas: Canvas,
-
-        device: HeartRateDevice,
-
-        top: Float
-    ) {
-
         val rect = RectF(
 
-            20f,
+            0f,
 
-            top,
+            0f,
 
-            width - 20f,
+            width.toFloat(),
 
-            top + 150f
+            height.toFloat()
         )
 
         canvas.drawRoundRect(
@@ -141,7 +118,7 @@ class DeviceListPanel(
 
             32f,
 
-            cardPaint
+            backgroundPaint
         )
 
         canvas.drawRoundRect(
@@ -155,69 +132,142 @@ class DeviceListPanel(
             borderPaint
         )
 
-        // 名称
         canvas.drawText(
 
-            device.name,
+            "HEART RATE DEVICES",
 
-            50f,
+            40f,
 
-            top + 60f,
+            70f,
 
             titlePaint
         )
 
-        // MAC
-        canvas.drawText(
+        var top =
+            150f
 
-            device.address,
+        devices.forEach {
 
-            50f,
+            device ->
 
-            top + 105f,
+            drawDeviceCard(
 
-            infoPaint
+                canvas,
+
+                device,
+
+                top
+            )
+
+            top += 170f
+        }
+    }
+
+    private fun drawDeviceCard(
+
+        canvas: Canvas,
+
+        device: HeartRateDevice,
+
+        top: Float
+    ) {
+
+        val rect = RectF(
+
+            30f,
+
+            top,
+
+            width - 30f,
+
+            top + 130f
         )
 
-        // RSSI
-        canvas.drawText(
+        val cardPaint = Paint().apply {
 
-            "RSSI ${device.rssi}",
-
-            width - 240f,
-
-            top + 85f,
-
-            infoPaint
-        )
-
-        // 状态圆点
-        val signalPaint = Paint().apply {
-
-            color = when {
-
-                device.rssi >= -50 ->
-                    Color.GREEN
-
-                device.rssi >= -70 ->
-                    Color.YELLOW
-
-                else ->
-                    Color.RED
-            }
+            color = Color.argb(
+                50,
+                255,
+                255,
+                255
+            )
 
             isAntiAlias = true
         }
 
-        canvas.drawCircle(
+        canvas.drawRoundRect(
 
-            width - 70f,
+            rect,
 
-            top + 75f,
+            24f,
 
-            14f,
+            24f,
 
-            signalPaint
+            cardPaint
+        )
+
+        canvas.drawText(
+
+            device.name,
+
+            60f,
+
+            top + 50f,
+
+            namePaint
+        )
+
+        canvas.drawText(
+
+            device.mac,
+
+            60f,
+
+            top + 95f,
+
+            infoPaint
+        )
+
+        canvas.drawText(
+
+            "RSSI ${device.rssi}",
+
+            width - 250f,
+
+            top + 50f,
+
+            infoPaint
+        )
+
+        val hrText = if (
+            device.hasHeartRateService
+        ) {
+
+            "Heart Rate Service"
+        } else {
+
+            "Unknown Device"
+        }
+
+        heartPaint.color = if (
+            device.hasHeartRateService
+        ) {
+
+            Color.CYAN
+        } else {
+
+            Color.RED
+        }
+
+        canvas.drawText(
+
+            hrText,
+
+            width - 320f,
+
+            top + 95f,
+
+            heartPaint
         )
     }
 }
