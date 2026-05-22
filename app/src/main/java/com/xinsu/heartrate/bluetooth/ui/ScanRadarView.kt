@@ -3,68 +3,61 @@ package com.xinsu.heartrate.bluetooth.ui
 import android.content.Context
 import android.graphics.*
 import android.view.View
-import com.xinsu.heartrate.core.render.RenderListener
-import com.xinsu.heartrate.core.render.RenderLoop
 import kotlin.math.cos
 import kotlin.math.sin
 
 class ScanRadarView(
-
     context: Context
+) : View(context) {
 
-) : View(context),
-    RenderListener {
+    private var isScanning =
+        false
 
-    private var rotation = 0f
+    private var sweepAngle =
+        0f
 
-    private val ringPaint =
-        Paint().apply {
+    private val gridPaint = Paint().apply {
 
-            style = Paint.Style.STROKE
+        style = Paint.Style.STROKE
 
-            strokeWidth = 2f
+        color = Color.argb(
+            50,
+            255,
+            255,
+            255
+        )
 
-            isAntiAlias = true
+        strokeWidth = 2f
 
-            color =
-                Color.argb(
-
-                    40,
-
-                    255,
-
-                    255,
-
-                    255
-                )
-        }
-
-    private val sweepPaint =
-        Paint().apply {
-
-            isAntiAlias = true
-        }
-
-    init {
-
-        RenderLoop.addListener(this)
+        isAntiAlias = true
     }
 
-    override fun onDetachedFromWindow() {
+    private val sweepPaint = Paint().apply {
 
-        super.onDetachedFromWindow()
+        style = Paint.Style.FILL
 
-        RenderLoop.removeListener(this)
+        isAntiAlias = true
     }
 
-    override fun onRender(
-        deltaTime: Float
-    ) {
+    private val centerPaint = Paint().apply {
 
-        rotation +=
-            deltaTime * 45f
+        color = Color.WHITE
 
-        postInvalidateOnAnimation()
+        isAntiAlias = true
+    }
+
+    fun startScan() {
+
+        isScanning = true
+
+        invalidate()
+    }
+
+    fun stopScan() {
+
+        isScanning = false
+
+        invalidate()
     }
 
     override fun onDraw(
@@ -73,86 +66,174 @@ class ScanRadarView(
 
         super.onDraw(canvas)
 
-        val centerX =
-            width / 2f
+        val cx = width / 2f
 
-        val centerY =
-            height / 2f
+        val cy = height / 2f
 
         val radius =
             width.coerceAtMost(
                 height
-            ) * 0.35f
+            ) * 0.42f
 
-        // Rings
+        // Radar Rings
         repeat(4) {
+
+            index ->
 
             canvas.drawCircle(
 
-                centerX,
-                centerY,
+                cx,
+
+                cy,
 
                 radius *
-                        ((it + 1) / 4f),
+                        ((index + 1) / 4f),
 
-                ringPaint
+                gridPaint
             )
         }
 
-        // Sweep
-        val sweepAngle =
-            Math.toRadians(
-                rotation.toDouble()
-            )
+        // Cross
+        canvas.drawLine(
 
-        val endX =
-            centerX +
-            cos(sweepAngle)
-                .toFloat() * radius
+            cx - radius,
 
-        val endY =
-            centerY +
-            sin(sweepAngle)
-                .toFloat() * radius
+            cy,
 
-        sweepPaint.shader =
+            cx + radius,
 
-            LinearGradient(
+            cy,
 
-                centerX,
-                centerY,
-
-                endX,
-                endY,
-
-                Color.argb(
-
-                    180,
-
-                    120,
-
-                    255,
-
-                    180
-                ),
-
-                Color.TRANSPARENT,
-
-                Shader.TileMode.CLAMP
-            )
-
-        sweepPaint.strokeWidth =
-            8f
+            gridPaint
+        )
 
         canvas.drawLine(
 
-            centerX,
-            centerY,
+            cx,
 
-            endX,
-            endY,
+            cy - radius,
 
-            sweepPaint
+            cx,
+
+            cy + radius,
+
+            gridPaint
+        )
+
+        // Sweep
+        if (isScanning) {
+
+            sweepAngle += 3.5f
+
+            val gradient = SweepGradient(
+
+                cx,
+
+                cy,
+
+                intArrayOf(
+
+                    Color.TRANSPARENT,
+
+                    Color.argb(
+                        40,
+                        0,
+                        255,
+                        255
+                    ),
+
+                    Color.argb(
+                        180,
+                        0,
+                        255,
+                        255
+                    )
+                ),
+
+                floatArrayOf(
+
+                    0f,
+
+                    0.85f,
+
+                    1f
+                )
+            )
+
+            val matrix = Matrix()
+
+            matrix.postRotate(
+
+                sweepAngle,
+
+                cx,
+
+                cy
+            )
+
+            gradient.setLocalMatrix(
+                matrix
+            )
+
+            sweepPaint.shader =
+                gradient
+
+            canvas.drawCircle(
+
+                cx,
+
+                cy,
+
+                radius,
+
+                sweepPaint
+            )
+
+            // Radar Dot
+            val radians =
+
+                Math.toRadians(
+                    sweepAngle.toDouble()
+                )
+
+            val dotX =
+
+                cx +
+
+                cos(radians)
+                    .toFloat() * radius
+
+            val dotY =
+
+                cy +
+
+                sin(radians)
+                    .toFloat() * radius
+
+            canvas.drawCircle(
+
+                dotX,
+
+                dotY,
+
+                10f,
+
+                centerPaint
+            )
+
+            invalidate()
+        }
+
+        // Center Point
+        canvas.drawCircle(
+
+            cx,
+
+            cy,
+
+            12f,
+
+            centerPaint
         )
     }
-    }
+}
