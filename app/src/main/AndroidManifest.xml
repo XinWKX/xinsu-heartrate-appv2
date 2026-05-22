@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Android 10 -->
     <uses-permission
@@ -13,6 +14,7 @@
     <uses-permission
         android:name="android.permission.BLUETOOTH_CONNECT" />
 
+    <!-- 基础蓝牙 -->
     <uses-permission
         android:name="android.permission.BLUETOOTH" />
 
@@ -40,9 +42,11 @@
         <!-- FileProvider -->
         <provider
 
-            android:name="androidx.core.content.FileProvider"
+            android:name=
+            "androidx.core.content.FileProvider"
 
-            android:authorities="${applicationId}.fileprovider"
+            android:authorities=
+            "${applicationId}.fileprovider"
 
             android:exported="false"
 
@@ -50,34 +54,40 @@
 
             <meta-data
 
-                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:name=
+                "android.support.FILE_PROVIDER_PATHS"
 
                 android:resource="@xml/file_paths" />
+
         </provider>
 
-        <!-- Main Activity -->
+        <!-- Main -->
         <activity
 
-            android:name=".MainActivity"
+            android:name=
+            ".ui.screens.MainActivity"
 
             android:exported="true">
 
             <intent-filter>
 
                 <action
-                    android:name="android.intent.action.MAIN" />
+                    android:name=
+                    "android.intent.action.MAIN" />
 
                 <category
-                    android:name="android.intent.category.LAUNCHER" />
+                    android:name=
+                    "android.intent.category.LAUNCHER" />
 
             </intent-filter>
 
         </activity>
 
-        <!-- Crash Activity -->
+        <!-- Crash -->
         <activity
 
-            android:name=".crash.ui.CrashActivity"
+            android:name=
+            ".crash.ui.CrashActivity"
 
             android:exported="false" />
 
