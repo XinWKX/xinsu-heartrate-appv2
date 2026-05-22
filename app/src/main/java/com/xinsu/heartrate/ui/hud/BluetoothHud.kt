@@ -3,27 +3,60 @@ package com.xinsu.heartrate.ui.hud
 import android.content.Context
 import android.graphics.*
 import android.view.View
-import com.xinsu.heartrate.bluetooth.data.HeartRateRepository
+import com.xinsu.heartrate.bluetooth.core.BleState
+import com.xinsu.heartrate.bluetooth.core.BleStateManager
 
 class BluetoothHud(
     context: Context
 ) : View(context) {
 
-    private val textPaint = Paint().apply {
+    private val backgroundPaint =
+        Paint().apply {
 
-        color = Color.WHITE
+            color = Color.argb(
+                70,
+                20,
+                20,
+                20
+            )
 
-        textSize = 38f
+            isAntiAlias = true
+        }
 
-        isAntiAlias = true
-    }
+    private val borderPaint =
+        Paint().apply {
 
-    private val statusPaint = Paint().apply {
+            style = Paint.Style.STROKE
 
-        textSize = 32f
+            strokeWidth = 3f
 
-        isAntiAlias = true
-    }
+            color = Color.argb(
+                120,
+                255,
+                255,
+                255
+            )
+
+            isAntiAlias = true
+        }
+
+    private val textPaint =
+        Paint().apply {
+
+            color = Color.WHITE
+
+            textSize = 34f
+
+            isAntiAlias = true
+        }
+
+    private val statePaint =
+        Paint().apply {
+
+            textSize = 30f
+
+            isAntiAlias = true
+        }
 
     override fun onDraw(
         canvas: Canvas
@@ -31,50 +64,104 @@ class BluetoothHud(
 
         super.onDraw(canvas)
 
-        val connected =
-            HeartRateRepository
-                .isConnected
+        val rect = RectF(
 
-        val deviceName =
-            HeartRateRepository
-                .connectedDeviceName
+            0f,
 
-        statusPaint.color = if (
-            connected
-        ) {
+            0f,
 
-            Color.GREEN
+            width.toFloat(),
 
-        } else {
+            height.toFloat()
+        )
 
-            Color.RED
+        canvas.drawRoundRect(
+
+            rect,
+
+            28f,
+
+            28f,
+
+            backgroundPaint
+        )
+
+        canvas.drawRoundRect(
+
+            rect,
+
+            28f,
+
+            28f,
+
+            borderPaint
+        )
+
+        val state =
+            BleStateManager.getState()
+
+        val stateText = when (state) {
+
+            BleState.IDLE ->
+                "Bluetooth Idle"
+
+            BleState.SCANNING ->
+                "Scanning Devices"
+
+            BleState.CONNECTING ->
+                "Connecting"
+
+            BleState.CONNECTED ->
+                "Connected"
+
+            BleState.DISCONNECTED ->
+                "Disconnected"
+
+            BleState.RECONNECTING ->
+                "Reconnecting"
+        }
+
+        statePaint.color = when (state) {
+
+            BleState.CONNECTED ->
+                Color.GREEN
+
+            BleState.SCANNING ->
+                Color.CYAN
+
+            BleState.CONNECTING ->
+                Color.YELLOW
+
+            BleState.RECONNECTING ->
+                Color.MAGENTA
+
+            BleState.DISCONNECTED ->
+                Color.RED
+
+            else ->
+                Color.WHITE
         }
 
         canvas.drawText(
 
-            deviceName,
+            "BLE STATUS",
 
-            20f,
+            32f,
 
-            50f,
+            42f,
 
             textPaint
         )
 
         canvas.drawText(
 
-            if (connected)
-                "CONNECTED"
-            else
-                "DISCONNECTED",
+            stateText,
 
-            20f,
+            32f,
 
-            95f,
+            82f,
 
-            statusPaint
+            statePaint
         )
-
-        invalidate()
     }
 }
