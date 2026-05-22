@@ -1,89 +1,80 @@
 package com.xinsu.heartrate.ui.hud
 
 import android.content.Context
-import android.graphics.Color
-import android.view.Gravity
-import android.widget.FrameLayout
-import android.widget.TextView
-import com.xinsu.heartrate.ui.glass.GlassPanel
+import android.graphics.*
+import android.view.View
+import com.xinsu.heartrate.bluetooth.data.HeartRateRepository
 
 class BluetoothHud(
-
     context: Context
+) : View(context) {
 
-) : FrameLayout(context) {
+    private val textPaint = Paint().apply {
 
-    private val statusText =
-        TextView(context)
+        color = Color.WHITE
 
-    init {
+        textSize = 38f
 
-        initUI()
+        isAntiAlias = true
     }
 
-    private fun initUI() {
+    private val statusPaint = Paint().apply {
 
-        val glass =
-            GlassPanel(context)
+        textSize = 32f
 
-        addView(
-
-            glass,
-
-            LayoutParams(
-
-                LayoutParams.MATCH_PARENT,
-
-                LayoutParams.MATCH_PARENT
-            )
-        )
-
-        statusText.text =
-            "DISCONNECTED"
-
-        statusText.textSize = 13f
-
-        statusText.letterSpacing =
-            0.12f
-
-        statusText.setTextColor(
-
-            Color.argb(
-
-                200,
-
-                255,
-
-                255,
-
-                255
-            )
-        )
-
-        val params =
-            LayoutParams(
-
-                LayoutParams.WRAP_CONTENT,
-
-                LayoutParams.WRAP_CONTENT
-            )
-
-        params.gravity =
-            Gravity.CENTER
-
-        addView(
-            statusText,
-            params
-        )
+        isAntiAlias = true
     }
 
-    /**
-     * 更新状态
-     */
-    fun updateStatus(
-        text: String
+    override fun onDraw(
+        canvas: Canvas
     ) {
 
-        statusText.text = text
+        super.onDraw(canvas)
+
+        val connected =
+            HeartRateRepository
+                .isConnected
+
+        val deviceName =
+            HeartRateRepository
+                .connectedDeviceName
+
+        statusPaint.color = if (
+            connected
+        ) {
+
+            Color.GREEN
+
+        } else {
+
+            Color.RED
+        }
+
+        canvas.drawText(
+
+            deviceName,
+
+            20f,
+
+            50f,
+
+            textPaint
+        )
+
+        canvas.drawText(
+
+            if (connected)
+                "CONNECTED"
+            else
+                "DISCONNECTED",
+
+            20f,
+
+            95f,
+
+            statusPaint
+        )
+
+        invalidate()
     }
 }
