@@ -1,101 +1,223 @@
 package com.xinsu.heartrate.bluetooth.ui
 
 import android.content.Context
-import android.view.Gravity
-import android.widget.FrameLayout
-import android.widget.LinearLayout
+import android.graphics.*
+import android.view.View
 import com.xinsu.heartrate.bluetooth.model.HeartRateDevice
-import com.xinsu.heartrate.ui.glass.GlassPanel
 
 class DeviceListPanel(
-
     context: Context
+) : View(context) {
 
-) : FrameLayout(context) {
+    private var devices =
+        emptyList<HeartRateDevice>()
 
-    private val container =
-        LinearLayout(context)
+    private val cardPaint = Paint().apply {
 
-    init {
+        color = Color.argb(
+            40,
+            255,
+            255,
+            255
+        )
 
-        initUI()
+        isAntiAlias = true
     }
 
-    private fun initUI() {
+    private val borderPaint = Paint().apply {
 
-        val glass =
-            GlassPanel(context)
+        style = Paint.Style.STROKE
 
-        addView(
+        strokeWidth = 2f
 
-            glass,
-
-            LayoutParams(
-
-                LayoutParams.MATCH_PARENT,
-
-                LayoutParams.MATCH_PARENT
-            )
+        color = Color.argb(
+            80,
+            255,
+            255,
+            255
         )
 
-        container.orientation =
-            LinearLayout.VERTICAL
+        isAntiAlias = true
+    }
 
-        container.gravity =
-            Gravity.TOP
+    private val titlePaint = Paint().apply {
 
-        container.setPadding(
+        color = Color.WHITE
 
-            24,
-            24,
-            24,
-            24
+        textSize = 42f
+
+        isAntiAlias = true
+
+        typeface = Typeface.DEFAULT_BOLD
+    }
+
+    private val infoPaint = Paint().apply {
+
+        color = Color.argb(
+            180,
+            255,
+            255,
+            255
         )
 
-        addView(
+        textSize = 30f
 
-            container,
-
-            LayoutParams(
-
-                LayoutParams.MATCH_PARENT,
-
-                LayoutParams.MATCH_PARENT
-            )
-        )
+        isAntiAlias = true
     }
 
     /**
-     * 更新设备列表
+     * 更新设备
      */
     fun updateDevices(
-        devices: List<HeartRateDevice>
+        newDevices:
+        List<HeartRateDevice>
     ) {
 
-        container.removeAllViews()
+        devices = newDevices
 
-        devices.forEach {
+        invalidate()
+    }
 
-            val card =
-                DeviceCard(context)
+    override fun onDraw(
+        canvas: Canvas
+    ) {
 
-            card.bind(it)
+        super.onDraw(canvas)
 
-            val params =
-                LinearLayout.LayoutParams(
+        val startY = 40f
 
-                    LayoutParams.MATCH_PARENT,
+        val spacing = 190f
 
-                    180
-                )
+        devices.forEachIndexed {
 
-            params.bottomMargin =
-                20
+            index,
+            device ->
 
-            container.addView(
-                card,
-                params
+            val top =
+
+                startY +
+
+                index * spacing
+
+            drawDeviceCard(
+
+                canvas,
+
+                device,
+
+                top
             )
         }
+    }
+
+    /**
+     * 绘制设备卡片
+     */
+    private fun drawDeviceCard(
+
+        canvas: Canvas,
+
+        device: HeartRateDevice,
+
+        top: Float
+    ) {
+
+        val rect = RectF(
+
+            20f,
+
+            top,
+
+            width - 20f,
+
+            top + 150f
+        )
+
+        canvas.drawRoundRect(
+
+            rect,
+
+            32f,
+
+            32f,
+
+            cardPaint
+        )
+
+        canvas.drawRoundRect(
+
+            rect,
+
+            32f,
+
+            32f,
+
+            borderPaint
+        )
+
+        // 名称
+        canvas.drawText(
+
+            device.name,
+
+            50f,
+
+            top + 60f,
+
+            titlePaint
+        )
+
+        // MAC
+        canvas.drawText(
+
+            device.address,
+
+            50f,
+
+            top + 105f,
+
+            infoPaint
+        )
+
+        // RSSI
+        canvas.drawText(
+
+            "RSSI ${device.rssi}",
+
+            width - 240f,
+
+            top + 85f,
+
+            infoPaint
+        )
+
+        // 状态圆点
+        val signalPaint = Paint().apply {
+
+            color = when {
+
+                device.rssi >= -50 ->
+                    Color.GREEN
+
+                device.rssi >= -70 ->
+                    Color.YELLOW
+
+                else ->
+                    Color.RED
+            }
+
+            isAntiAlias = true
+        }
+
+        canvas.drawCircle(
+
+            width - 70f,
+
+            top + 75f,
+
+            14f,
+
+            signalPaint
+        )
     }
 }
