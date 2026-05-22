@@ -2,29 +2,33 @@ package com.xinsu.heartrate.bluetooth.core
 
 object BleStateManager {
 
-    var currentState:
-            BleState = BleState.IDLE
+    private var currentState =
+        BleState.IDLE
 
-    var connectedDeviceName:
-            String = "Unknown"
+    private var listener:
+            ((BleState) -> Unit)?
+        = null
 
-    var currentRssi:
-            Int = -100
+    fun getState():
+            BleState {
+
+        return currentState
+    }
 
     fun setState(
         state: BleState
     ) {
 
         currentState = state
+
+        listener?.invoke(state)
     }
 
-    fun updateDevice(
-        name: String,
-        rssi: Int
+    fun setListener(
+        callback:
+        (BleState) -> Unit
     ) {
 
-        connectedDeviceName = name
-
-        currentRssi = rssi
+        listener = callback
     }
 }
