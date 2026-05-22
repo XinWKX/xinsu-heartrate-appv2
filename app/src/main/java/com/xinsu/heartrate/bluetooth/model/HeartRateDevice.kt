@@ -4,9 +4,10 @@ data class HeartRateDevice(
 
     val name: String,
 
-    val address: String,
+    val mac: String,
 
     val rssi: Int,
 
-    val connected: Boolean = false
+    val hasHeartRateService:
+    Boolean = true
 )
