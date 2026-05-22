@@ -2,6 +2,7 @@ package com.xinsu.heartrate.crash.handler
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import com.xinsu.heartrate.crash.logger.CrashLogger
 import com.xinsu.heartrate.crash.ui.CrashActivity
 import kotlin.system.exitProcess
@@ -17,20 +18,32 @@ class CrashHandler(
         thread: Thread,
 
         throwable: Throwable
+
     ) {
 
-        // 保存崩溃日志
         CrashLogger.saveCrashLog(
 
             context,
+
             throwable
         )
 
-        // 打开崩溃页面
+        val crashLog = Log.getStackTraceString(
+            throwable
+        )
+
         val intent = Intent(
 
             context,
+
             CrashActivity::class.java
+        )
+
+        intent.putExtra(
+
+            "crash_log",
+
+            crashLog
         )
 
         intent.addFlags(
@@ -39,7 +52,6 @@ class CrashHandler(
 
         context.startActivity(intent)
 
-        // 杀死进程
         android.os.Process.killProcess(
             android.os.Process.myPid()
         )
