@@ -1,82 +1,131 @@
 package com.xinsu.heartrate.ui.hud
 
 import android.content.Context
-import android.graphics.Color
-import android.view.Gravity
-import android.widget.FrameLayout
-import android.widget.TextView
-import com.xinsu.heartrate.ui.glass.GlassPanel
+import android.graphics.*
+import android.view.View
+import com.xinsu.heartrate.bluetooth.core.BleState
+import com.xinsu.heartrate.bluetooth.core.BleStateManager
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class TopStatusBar(
-
     context: Context
+) : View(context) {
 
-) : FrameLayout(context) {
+    private val textPaint = Paint().apply {
 
-    init {
+        color = Color.WHITE
 
-        initUI()
+        textSize = 34f
+
+        isAntiAlias = true
     }
 
-    private fun initUI() {
+    private val statePaint = Paint().apply {
 
-        val glass =
-            GlassPanel(context)
+        textSize = 30f
 
-        addView(
+        isAntiAlias = true
+    }
 
-            glass,
+    private val dateFormat =
 
-            LayoutParams(
+        SimpleDateFormat(
 
-                LayoutParams.MATCH_PARENT,
+            "HH:mm:ss",
 
-                LayoutParams.MATCH_PARENT
-            )
+            Locale.getDefault()
         )
 
-        val title =
-            TextView(context)
+    override fun onDraw(
+        canvas: Canvas
+    ) {
 
-        title.text =
-            "XINSU MEDICAL HUD"
+        super.onDraw(canvas)
 
-        title.textSize = 14f
+        val state =
+            BleStateManager.getState()
 
-        title.letterSpacing =
-            0.12f
+        val stateText =
 
-        title.setTextColor(
+            when (state) {
 
-            Color.argb(
+                BleState.IDLE ->
+                    "IDLE"
 
-                220,
+                BleState.SCANNING ->
+                    "SCANNING"
 
-                255,
+                BleState.CONNECTING ->
+                    "CONNECTING"
 
-                255,
+                BleState.CONNECTED ->
+                    "CONNECTED"
 
-                255
-            )
+                BleState.DISCONNECTED ->
+                    "DISCONNECTED"
+
+                BleState.RECONNECTING ->
+                    "RECONNECTING"
+            }
+
+        statePaint.color = when (state) {
+
+            BleState.CONNECTED ->
+                Color.GREEN
+
+            BleState.SCANNING ->
+                Color.CYAN
+
+            BleState.CONNECTING ->
+                Color.YELLOW
+
+            BleState.RECONNECTING ->
+                Color.MAGENTA
+
+            BleState.DISCONNECTED ->
+                Color.RED
+
+            else ->
+                Color.WHITE
+        }
+
+        canvas.drawText(
+
+            "XINSU HEART RATE",
+
+            0f,
+
+            42f,
+
+            textPaint
         )
 
-        val params =
-            LayoutParams(
+        canvas.drawText(
 
-                LayoutParams.WRAP_CONTENT,
+            stateText,
 
-                LayoutParams.WRAP_CONTENT
-            )
+            width - 320f,
 
-        params.gravity =
-            Gravity.CENTER_VERTICAL
+            42f,
 
-        params.leftMargin =
-            36
-
-        addView(
-            title,
-            params
+            statePaint
         )
+
+        canvas.drawText(
+
+            dateFormat.format(
+                Date()
+            ),
+
+            width - 180f,
+
+            85f,
+
+            textPaint
+        )
+
+        invalidate()
     }
 }
