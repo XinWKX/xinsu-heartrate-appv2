@@ -2,8 +2,13 @@ package com.xinsu.heartrate.bluetooth.core
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
-import android.bluetooth.le.*
+import android.bluetooth.le.BluetoothLeScanner
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.os.ParcelUuid
 import com.xinsu.heartrate.bluetooth.model.HeartRateDevice
@@ -16,19 +21,26 @@ class BleScanner(
 
 ) {
 
+    /**
+     * BluetoothManager
+     */
     private val bluetoothManager =
 
         context.getSystemService(
             Context.BLUETOOTH_SERVICE
         ) as BluetoothManager
 
+    /**
+     * BluetoothAdapter
+     */
     private val bluetoothAdapter:
             BluetoothAdapter =
 
         bluetoothManager.adapter
 
     /**
-     * Android 某些机型 scanner 可能为空
+     * Scanner
+     * 某些 Android 机型可能为空
      */
     private val scanner:
             BluetoothLeScanner?
@@ -52,21 +64,27 @@ class BleScanner(
         mutableListOf<HeartRateDevice>()
 
     /**
-     * 设备更新回调
+     * 原生 BluetoothDevice 缓存
+     */
+    private val bluetoothDevices =
+        mutableMapOf<String, BluetoothDevice>()
+
+    /**
+     * Device 更新回调
      */
     var onDevicesUpdated:
             ((List<HeartRateDevice>) -> Unit)?
         = null
 
     /**
-     * 扫描错误回调
+     * Scan Failed 回调
      */
     var onScanFailed:
             ((Int) -> Unit)?
         = null
 
     /**
-     * 心率服务 UUID
+     * Heart Rate Service UUID
      */
     private val heartRateService =
 
@@ -79,7 +97,7 @@ class BleScanner(
         )
 
     /**
-     * 扫描回调
+     * Scan Callback
      */
     private val scanCallback =
 
@@ -144,7 +162,7 @@ class BleScanner(
     fun startScan() {
 
         /**
-         * 避免重复扫描
+         * 防止重复扫描
          */
         if (isScanning) {
 
@@ -152,7 +170,7 @@ class BleScanner(
         }
 
         /**
-         * 蓝牙关闭
+         * 蓝牙未开启
          */
         if (!bluetoothAdapter.isEnabled) {
 
@@ -163,8 +181,16 @@ class BleScanner(
             return
         }
 
+        /**
+         * 清空缓存
+         */
         devices.clear()
 
+        bluetoothDevices.clear()
+
+        /**
+         * Scan Filter
+         */
         val filter =
 
             ScanFilter.Builder()
@@ -175,6 +201,9 @@ class BleScanner(
 
                 .build()
 
+        /**
+         * Scan Settings
+         */
         val settings =
 
             ScanSettings.Builder()
@@ -189,6 +218,9 @@ class BleScanner(
 
                 .build()
 
+        /**
+         * 开始扫描
+         */
         scanner?.startScan(
 
             listOf(filter),
@@ -238,13 +270,15 @@ class BleScanner(
 
         devices.clear()
 
+        bluetoothDevices.clear()
+
         onDevicesUpdated?.invoke(
             devices
         )
     }
 
     /**
-     * 获取当前设备列表
+     * 获取设备列表
      */
     fun getDevices():
             List<HeartRateDevice> {
@@ -253,7 +287,17 @@ class BleScanner(
     }
 
     /**
-     * 解析设备
+     * 获取 BluetoothDevice
+     */
+    fun getBluetoothDevice(
+        mac: String
+    ): BluetoothDevice? {
+
+        return bluetoothDevices[mac]
+    }
+
+    /**
+     * Parse Device
      */
     private fun parseDevice(
         result: ScanResult
@@ -266,7 +310,8 @@ class BleScanner(
             result.scanRecord ?: return
 
         /**
-         * 二次验证心率服务
+         * 二次验证
+         * Heart Rate Service
          */
         val hasHeartRateService =
 
@@ -285,6 +330,12 @@ class BleScanner(
 
         val mac =
             device.address ?: return
+
+        /**
+         * 保存原生 BluetoothDevice
+         */
+        bluetoothDevices[mac] =
+            device
 
         /**
          * 已存在设备
