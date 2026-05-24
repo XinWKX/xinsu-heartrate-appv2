@@ -2,6 +2,7 @@ package com.xinsu.heartrate.bluetooth.ui
 
 import android.content.Context
 import android.graphics.*
+import android.view.MotionEvent
 import android.view.View
 import com.xinsu.heartrate.bluetooth.model.HeartRateDevice
 
@@ -9,9 +10,40 @@ class DeviceListPanel(
     context: Context
 ) : View(context) {
 
+    /**
+     * 设备列表
+     */
     private val devices =
         mutableListOf<HeartRateDevice>()
 
+    /**
+     * Device 点击区域
+     */
+    private val deviceBounds =
+        mutableListOf<Pair<RectF, HeartRateDevice>>()
+
+    /**
+     * 当前连接设备
+     */
+    private var connectedMac:
+            String? = null
+
+    /**
+     * 当前按下设备
+     */
+    private var pressedMac:
+            String? = null
+
+    /**
+     * 点击回调
+     */
+    var onDeviceClicked:
+            ((HeartRateDevice) -> Unit)?
+        = null
+
+    /**
+     * Background
+     */
     private val backgroundPaint =
         Paint().apply {
 
@@ -25,6 +57,9 @@ class DeviceListPanel(
             isAntiAlias = true
         }
 
+    /**
+     * Border
+     */
     private val borderPaint =
         Paint().apply {
 
@@ -42,6 +77,9 @@ class DeviceListPanel(
             isAntiAlias = true
         }
 
+    /**
+     * 标题
+     */
     private val titlePaint =
         Paint().apply {
 
@@ -50,8 +88,14 @@ class DeviceListPanel(
             textSize = 42f
 
             isAntiAlias = true
+
+            typeface =
+                Typeface.DEFAULT_BOLD
         }
 
+    /**
+     * Device Name
+     */
     private val namePaint =
         Paint().apply {
 
@@ -62,6 +106,9 @@ class DeviceListPanel(
             isAntiAlias = true
         }
 
+    /**
+     * Info
+     */
     private val infoPaint =
         Paint().apply {
 
@@ -72,6 +119,9 @@ class DeviceListPanel(
             isAntiAlias = true
         }
 
+    /**
+     * Heart
+     */
     private val heartPaint =
         Paint().apply {
 
@@ -82,6 +132,41 @@ class DeviceListPanel(
             isAntiAlias = true
         }
 
+    /**
+     * Connected
+     */
+    private val connectedPaint =
+        Paint().apply {
+
+            color = Color.argb(
+                80,
+                0,
+                255,
+                200
+            )
+
+            isAntiAlias = true
+        }
+
+    /**
+     * Pressed
+     */
+    private val pressedPaint =
+        Paint().apply {
+
+            color = Color.argb(
+                120,
+                255,
+                255,
+                255
+            )
+
+            isAntiAlias = true
+        }
+
+    /**
+     * 更新设备
+     */
     fun updateDevices(
         list: List<HeartRateDevice>
     ) {
@@ -93,11 +178,28 @@ class DeviceListPanel(
         invalidate()
     }
 
+    /**
+     * 设置当前连接设备
+     */
+    fun setConnectedDevice(
+        mac: String?
+    ) {
+
+        connectedMac = mac
+
+        invalidate()
+    }
+
+    /**
+     * Draw
+     */
     override fun onDraw(
         canvas: Canvas
     ) {
 
         super.onDraw(canvas)
+
+        deviceBounds.clear()
 
         val rect = RectF(
 
@@ -143,8 +245,7 @@ class DeviceListPanel(
             titlePaint
         )
 
-        var top =
-            150f
+        var top = 150f
 
         devices.forEach {
 
@@ -161,8 +262,53 @@ class DeviceListPanel(
 
             top += 170f
         }
+
+        if (devices.isEmpty()) {
+
+            drawEmpty(canvas)
+        }
     }
 
+    /**
+     * 空状态
+     */
+    private fun drawEmpty(
+        canvas: Canvas
+    ) {
+
+        val paint =
+            Paint().apply {
+
+                color = Color.argb(
+                    180,
+                    255,
+                    255,
+                    255
+                )
+
+                textSize = 32f
+
+                isAntiAlias = true
+
+                textAlign =
+                    Paint.Align.CENTER
+            }
+
+        canvas.drawText(
+
+            "NO HEART RATE DEVICE",
+
+            width / 2f,
+
+            height / 2f,
+
+            paint
+        )
+    }
+
+    /**
+     * 绘制设备卡片
+     */
     private fun drawDeviceCard(
 
         canvas: Canvas,
@@ -181,6 +327,10 @@ class DeviceListPanel(
             width - 30f,
 
             top + 130f
+        )
+
+        deviceBounds.add(
+            Pair(rect, device)
         )
 
         val cardPaint = Paint().apply {
@@ -205,6 +355,50 @@ class DeviceListPanel(
 
             cardPaint
         )
+
+        /**
+         * 已连接高亮
+         */
+        if (
+
+            connectedMac ==
+            device.mac
+
+        ) {
+
+            canvas.drawRoundRect(
+
+                rect,
+
+                24f,
+
+                24f,
+
+                connectedPaint
+            )
+        }
+
+        /**
+         * 按下效果
+         */
+        if (
+
+            pressedMac ==
+            device.mac
+
+        ) {
+
+            canvas.drawRoundRect(
+
+                rect,
+
+                24f,
+
+                24f,
+
+                pressedPaint
+            )
+        }
 
         canvas.drawText(
 
@@ -269,5 +463,131 @@ class DeviceListPanel(
 
             heartPaint
         )
+
+        /**
+         * CONNECTED
+         */
+        if (
+
+            connectedMac ==
+            device.mac
+
+        ) {
+
+            val connectPaint =
+                Paint().apply {
+
+                    color = Color.GREEN
+
+                    textSize = 22f
+
+                    isAntiAlias = true
+                }
+
+            canvas.drawText(
+
+                "CONNECTED",
+
+                width - 260f,
+
+                top + 120f,
+
+                connectPaint
+            )
+        }
+    }
+
+    /**
+     * Touch
+     */
+    override fun onTouchEvent(
+        event: MotionEvent
+    ): Boolean {
+
+        when (event.action) {
+
+            MotionEvent.ACTION_DOWN -> {
+
+                pressedMac =
+
+                    findTouchedDevice(
+
+                        event.x,
+
+                        event.y
+
+                    )?.mac
+
+                invalidate()
+
+                return true
+            }
+
+            MotionEvent.ACTION_UP -> {
+
+                val device =
+
+                    findTouchedDevice(
+
+                        event.x,
+
+                        event.y
+                    )
+
+                pressedMac = null
+
+                invalidate()
+
+                if (device != null) {
+
+                    onDeviceClicked
+                        ?.invoke(device)
+                }
+
+                return true
+            }
+
+            MotionEvent.ACTION_CANCEL -> {
+
+                pressedMac = null
+
+                invalidate()
+
+                return true
+            }
+        }
+
+        return super.onTouchEvent(event)
+    }
+
+    /**
+     * 查找点击设备
+     */
+    private fun findTouchedDevice(
+
+        x: Float,
+
+        y: Float
+
+    ): HeartRateDevice? {
+
+        deviceBounds.forEach {
+
+            pair ->
+
+            if (
+
+                pair.first.contains(
+                    x,
+                    y
+                )
+
+            ) {
+
+                return pair.second
+            }
+        }
+
+        return null
     }
 }
