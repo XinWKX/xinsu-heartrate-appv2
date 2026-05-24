@@ -3,7 +3,10 @@ package com.xinsu.heartrate.bluetooth.core
 object HeartRateParser {
 
     /**
-     * 解析 BPM
+     * 解析 BLE 心率数据
+     *
+     * Heart Rate Measurement
+     * UUID: 0x2A37
      */
     fun parse(
         data: ByteArray
@@ -14,23 +17,55 @@ object HeartRateParser {
             return 0
         }
 
-        val flag =
+        /**
+         * Flags
+         */
+        val flags =
             data[0].toInt()
 
-        val format =
-            flag and 0x01
+        /**
+         * bit0:
+         *
+         * 0 -> UINT8
+         * 1 -> UINT16
+         */
+        val isUInt16 =
+            flags and 0x01 != 0
 
-        return if (format == 0) {
+        return if (isUInt16) {
 
-            data[1].toInt() and 0xFF
+            /**
+             * UINT16
+             */
+            if (data.size < 3) {
+
+                0
+
+            } else {
+
+                (
+                    (data[2].toInt() and 0xFF)
+                            shl 8
+                        ) or
+                        (
+                            data[1].toInt()
+                                    and 0xFF
+                            )
+            }
 
         } else {
 
-            (
-                (data[2].toInt() shl 8)
-                        or
-                        (data[1].toInt() and 0xFF)
-                )
+            /**
+             * UINT8
+             */
+            if (data.size < 2) {
+
+                0
+
+            } else {
+
+                data[1].toInt() and 0xFF
+            }
         }
     }
 }
