@@ -14,34 +14,31 @@ object BleTimeoutController {
             Runnable? = null
 
     /**
-     * 开始连接超时
+     * 启动连接超时
      */
     fun startTimeout(
 
-        timeout: Long = 10000,
-
-        onTimeout: () -> Unit
+        onTimeout:
+        () -> Unit
     ) {
 
         cancel()
 
-        timeoutRunnable =
-            Runnable {
+        timeoutRunnable = Runnable {
 
-                BleStateManager.setState(
-                    BleState.FAILED
-                )
+            BleStateManager.setState(
+                BleState.FAILED
+            )
 
-                BleConnectionLock.unlock()
-
-                onTimeout()
-            }
+            onTimeout.invoke()
+        }
 
         handler.postDelayed(
 
             timeoutRunnable!!,
 
-            timeout
+            BleConstants
+                .CONNECTION_TIMEOUT
         )
     }
 
@@ -54,5 +51,7 @@ object BleTimeoutController {
 
             handler.removeCallbacks(it)
         }
+
+        timeoutRunnable = null
     }
 }
