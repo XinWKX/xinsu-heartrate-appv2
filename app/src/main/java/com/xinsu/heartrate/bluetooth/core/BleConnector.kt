@@ -11,14 +11,20 @@ class BleConnector(
     private val context: Context
 ) {
 
+    /**
+     * 当前 GATT
+     */
     private var bluetoothGatt:
             BluetoothGatt? = null
 
+    /**
+     * 当前设备
+     */
     private var currentDevice:
             BluetoothDevice? = null
 
     /**
-     * 当前连接状态
+     * 当前是否已连接
      */
     var isConnected =
         false
@@ -26,14 +32,14 @@ class BleConnector(
         private set
 
     /**
-     * 心率变化回调
+     * BPM 回调
      */
     var onHeartRateChanged:
             ((Int) -> Unit)?
         = null
 
     /**
-     * 连接状态变化
+     * 状态回调
      */
     var onConnectionStateChanged:
             ((BleState) -> Unit)?
@@ -55,7 +61,7 @@ class BleConnector(
     }
 
     /**
-     * 连接设备
+     * 连接 BLE
      */
     fun connect(
         device: BluetoothDevice
@@ -77,6 +83,9 @@ class BleConnector(
 
         isConnected = false
 
+        /**
+         * 更新状态
+         */
         BleStateManager.setState(
             BleState.CONNECTING
         )
@@ -86,7 +95,7 @@ class BleConnector(
         )
 
         /**
-         * 清理旧连接
+         * 清理旧 GATT
          */
         try {
 
@@ -100,7 +109,7 @@ class BleConnector(
         bluetoothGatt = null
 
         /**
-         * 连接超时
+         * 超时控制
          */
         BleTimeoutController
             .startTimeout {
@@ -109,7 +118,7 @@ class BleConnector(
             }
 
         /**
-         * 发起 GATT
+         * 发起连接
          */
         bluetoothGatt =
 
@@ -145,6 +154,15 @@ class BleConnector(
 
         BleConnectionLock.unlock()
 
+        BleStateManager.connectedDeviceName =
+            "NONE"
+
+        BleStateManager.currentHeartRate =
+            0
+
+        BleStateManager.currentRssi =
+            0
+
         BleStateManager.setState(
             BleState.DISCONNECTED
         )
@@ -163,11 +181,14 @@ class BleConnector(
     }
 
     /**
-     * GATT Callback
+     * GATT 回调
      */
     private val gattCallback =
         object : BluetoothGattCallback() {
 
+            /**
+             * 连接状态变化
+             */
             override fun onConnectionStateChange(
 
                 gatt: BluetoothGatt,
@@ -196,6 +217,8 @@ class BleConnector(
 
                         isConnected = true
 
+                        bluetoothGatt = gatt
+
                         BleTimeoutController
                             .cancel()
 
@@ -219,7 +242,7 @@ class BleConnector(
                                 ?: "UNKNOWN"
 
                         /**
-                         * 开始发现服务
+                         * 发现服务
                          */
                         gatt.discoverServices()
                     }
@@ -286,6 +309,13 @@ class BleConnector(
                     status
                 )
 
+                if (
+                    status != BluetoothGatt.GATT_SUCCESS
+                ) {
+
+                    return
+                }
+
                 val service =
 
                     gatt.getService(
@@ -307,7 +337,7 @@ class BleConnector(
                         ?: return
 
                 /**
-                 * 开启 Notify
+                 * 开启通知
                  */
                 gatt.setCharacteristicNotification(
 
@@ -317,7 +347,7 @@ class BleConnector(
                 )
 
                 /**
-                 * CCCD Descriptor
+                 * Descriptor
                  */
                 val descriptor =
 
@@ -327,19 +357,21 @@ class BleConnector(
                             .CLIENT_CHARACTERISTIC_CONFIG_UUID
                     )
 
-                descriptor?.let {
+                if (descriptor != null) {
 
-                    it.value =
+                    descriptor.value =
 
                         BluetoothGattDescriptor
                             .ENABLE_NOTIFICATION_VALUE
 
-                    gatt.writeDescriptor(it)
+                    gatt.writeDescriptor(
+                        descriptor
+                    )
                 }
             }
 
             /**
-             * 心率数据变化
+             * 数据变化
              */
             override fun onCharacteristicChanged(
 
@@ -356,12 +388,26 @@ class BleConnector(
                     characteristic
                 )
 
+                /**
+                 * 非心率 Characteristic
+                 */
+                if (
+
+                    characteristic.uuid !=
+
+                    BleConstants
+                        .HEART_RATE_CHARACTERISTIC_UUID
+                ) {
+
+                    return
+                }
+
                 val data =
                     characteristic.value
                         ?: return
 
                 /**
-                 * BPM 解析
+                 * 解析 BPM
                  */
                 val bpm =
                     HeartRateParser.parse(
@@ -375,7 +421,7 @@ class BleConnector(
                     bpm.toFloat()
 
                 /**
-                 * 更新状态层
+                 * 更新状态
                  */
                 BleStateManager
                     .currentHeartRate = bpm
@@ -385,7 +431,7 @@ class BleConnector(
                 )
 
                 /**
-                 * 更新 RSSI
+                 * 刷新 RSSI
                  */
                 bluetoothGatt
                     ?.readRemoteRssi()
@@ -411,6 +457,13 @@ class BleConnector(
 
                     status
                 )
+
+                if (
+                    status != BluetoothGatt.GATT_SUCCESS
+                ) {
+
+                    return
+                }
 
                 BleStateManager.currentRssi =
                     rssi
